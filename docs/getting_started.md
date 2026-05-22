@@ -19,7 +19,14 @@ Fast track through [Installation](#installation) · [First-Time Setup](#first-ti
 
 ## Installation
 
-=== "BRAT (Recommended)"
+=== "Obsidian Plugin Store (Recommended)"
+
+    !!! info "Beta Updates with BRAT"
+        1. Head over to [Obsidian Community Plugin Store](https://community.obsidian.md/plugins/full-calendar-remastered)
+        2. Select 'Add to Obsidian'
+
+
+=== "BRAT (for beta testers)"
 
     !!! info "Beta Updates with BRAT"
         1. Install the **[BRAT](https://obsidian.md/plugins?search=brat)** plugin from the Obsidian Community Plugins store.

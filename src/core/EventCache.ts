@@ -23,7 +23,7 @@ import EventStore from './EventStore';
 import { OFCEvent, EventLocation } from '../types';
 import { CalendarProvider } from '../providers/Provider';
 import { EventEnhancer } from './EventEnhancer';
-import { TimeEngine, TimeState } from './TimeEngine';
+import { TimeEngine, TimeState, EnrichedOFCEvent } from './TimeEngine';
 
 // Import refactored handlers
 import { CacheSubscriptionManager } from './cache/CacheSubscriptionManager';
@@ -99,7 +99,6 @@ export default class EventCache {
       void this.onSettingsChanged();
     };
     emitter.on('full-calendar:view-config-changed', this.viewConfigListener);
-    emitter.on('full-calendar:sources-changed', this.viewConfigListener);
   }
 
   public stopListening(): void {
@@ -108,7 +107,6 @@ export default class EventCache {
         off: (name: string, cb: () => void) => void;
       };
       emitter.off('full-calendar:view-config-changed', this.viewConfigListener);
-      emitter.off('full-calendar:sources-changed', this.viewConfigListener);
       this.viewConfigListener = null;
       this.workspaceEmitter = null;
     }
@@ -452,6 +450,10 @@ export default class EventCache {
   // ====================================================================
   //                         GETTERS & SETTERS
   // ====================================================================
+
+  public getOccurrenceCache(): EnrichedOFCEvent[] {
+    return this.timeEngine.getOccurrenceCache();
+  }
 
   get plugin(): FullCalendarPlugin {
     return this._plugin;

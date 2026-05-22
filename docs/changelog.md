@@ -7,10 +7,114 @@ Corresponds to
 -   **For Dev**: `git tags` of the `main` branch
 
 
-
-## v0.13.0
+## v0.13.2
 
 ### New Features
+
+-   **[ChronoAnalyser Demo](user/chrono_analyser/introduction.md)**  
+    _Introduced the ChronoAnalyser demo to improve accessibility and provide a preview of analytical capabilities._
+
+-   **[Dynamic Asset System (i18n + NLP)](user/features/nlp.md)**  
+    _Implemented dynamic loading of i18n and NLP payloads with remote asset synchronization and GitHub Actions deployment pipeline support._
+
+-   **Versioned Remote Asset Refresh**  
+    _Added automatic remote asset refresh for ChronoAnalyser, i18n, and NLP components to ensure consistency across updates._
+
+-   **[Google Calendar Integration](user/calendars/gcal.md)**  
+    _Implemented Google calendar provider support with full event lifecycle handling._
+
+-   **[Outlook Integration Improvements](user/calendars/outlook.md)**  
+    _Enhanced Outlook provider implementation and refined integration handling._
+
+-   **[Reactive Event Linked Notes](user/features/event-linked-notes.md)**  
+    _Introduced a fully reactive linked-notes system for calendar events with template-driven note creation and metadata linking._  
+    - TemplateEngine for isolated body templating  
+    - LinkedNoteIndex for in-memory metadata mapping (`fc-event-uid`, `fc-calendar-id`)  
+    - Decoupled utilities (`noteUtils.ts`) for note operations  
+    - Provider-wide integration (Google, CalDAV, ICS, Outlook)  
+    - UI integration (event modal + settings)  
+    - Full unit test coverage  
+
+-   **[Tasks Global Query Support](user/calendars/tasks-plugin-integration.md#supported-global-query-syntax)** ([#263](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/263), [#264](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/264))  
+    _Added support for Obsidian Tasks global query filtering in the backlog sidebar._  
+    - `includeGlobalQueryInBacklog` setting + translations  
+    - SOLID-compliant `TasksQueryFilter` parser  
+    - Supports path, folder, tag, priority, and regex (+/- rules)  
+    - Real-time filtering in `getUndatedTasks()`  
+    - Comprehensive Jest test coverage  
+
+-   **[CalDAV VTODO Support](user/calendars/caldav.md)** ([#258](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/258))  
+    _Extended CalDAV provider to support VTODO tasks and improved fetching logic._
+
+-   **[FCR Reminder Companion Integration](user/features/fcr-reminder.md)**  
+    _Implemented full integration with the FCR Reminder Companion daemon._  
+    - Settings UI + synchronization pipeline  
+    - 24-hour upcoming reminder payload generation  
+    - Deep-link vault integration  
+    - Manual sync command and NLP intent (`SYNC_FCR_REMINDER`)  
+    - Startup liveness retries + high-visibility warning system  
+
+-   **[Unified Reminder System](user/features/reminders.md)**  
+    _Centralized notification logic via `NotificationManager`._  
+    - Single source of truth for trigger calculation  
+    - Support for custom `notify` frontmatter overrides  
+    - Companion mutex to suppress duplicate notifications  
+    - Public API exposure for reusable payload generation  
+    - Full Jest test suite  
+
+-   **[Daily Note Enhancements](user/calendars/dailynote.md)** ([#208](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/208))  
+    _Added support for Day Planner format integration in daily notes._
+
+
+### Improvements & Fixes
+
+-   **CalDAV Timezone Handling** ([#265](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/265))  
+    _Improved ICS timezone serialization to ensure correctness across local and UTC contexts._  
+    - Added `addTimeProperty` helper to enforce TZID consistency  
+    - Correct UTC construction using `ical.Time` options  
+    - Expanded formatter test coverage  
+    - Updated timezone architecture documentation  
+
+-   **Event Cache Stability & UI Refresh** ([#262](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/262))  
+    _Improved update propagation and UI refresh behavior._  
+    - Pass affected calendar IDs through sync pipeline  
+    - Prevent unnecessary FullCalendar reloads  
+    - Enforce partial refresh (UI Refresh Invariant)  
+    - Added comprehensive type-safe Jest tests  
+
+-   **Google & Outlook Fixes** ([#268](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/268))  
+    _Fixed CalendarSettings state management inconsistencies._
+
+-   **Instance Initialization Fixes**  
+    _Added listener for instance initialization and ensured proper source updates in CalendarSettings._
+
+-   **Linked Notes Stability Improvements**  
+    _Fixed note creation, templating, and frontmatter serialization issues across providers._
+
+-   **Daily Note Serialization Fix**  
+    _Resolved incorrect object stringification in `notify` attributes._
+
+-   **ICS / VTODO Compliance Fixes** ([#258](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/258), [#257](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/257))  
+    _Aligned VTODO handling with RFC 5545 inclusive DUE semantics._  
+    - Removed incorrect +/-1 day adjustments  
+    - Fixed negative duration issues  
+    - Unified behavior across single and recurring tasks  
+    - Expanded parser and formatter test coverage  
+
+-   **ICS Serialization Improvements**  
+    _Enhanced VTODO serialization and timezone handling consistency._
+
+-   **Reminder System Refactor**  
+    _Simplified FCR Reminder integration by delegating payload generation to `NotificationManager`._
+
+-   **Code Cleanup**  
+    _Removed outdated Outlook provider exports and improved internal structure._
+
+
+---
+
+
+## v0.13.0
 
 -   **[Natural Language Processing (NLP)](user/features/nlp.md)** ([#253](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/253), [#255](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/255))  
     _Introduced the FCR Command NLP engine for natural language scheduling. Features include duration parsing, next-occurring day logic, recurrence, smart calendar matching, and explicit category/time extraction._
@@ -26,8 +130,6 @@ Corresponds to
 
 -   **[FullCalendar API](user/settings/api.md)** ([#253](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/253))  
     _Exposed a public API for programmatic calendar control, secured by scoped access and token management._
-
-### Improvements & Fixes
 
 -   **Tasks Plugin Enhancements** ([#208](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/208), [#250](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/250), [#254](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/254))  
     _Added Day Planner format support, 24h time prefix serialization, and a bulk migration action. Also added deduplication for mirrored tasks and fuzzy search/filtering in the task backlog._

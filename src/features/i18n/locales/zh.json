@@ -132,6 +132,11 @@
         "duration": "Duration (hrs)",
         "date": "Date",
         "filePath": "File path"
+      },
+      "demo": {
+        "title": "DEMO MODE",
+        "description": "You are exploring sample ChronoAnalyser data. Configure your own insight groups to switch permanently to live data.",
+        "turnOff": "Turn off demo"
       }
     }
   },
@@ -143,7 +148,8 @@
     "openChronoAnalyser": "打开数据分析器（仅桌面版）",
     "openSidebar": "在侧边栏打开",
     "syncActivityWatch": "同步 ActivityWatch",
-    "nlpQuickAdd": "FCR Command"
+    "nlpQuickAdd": "FCR Command",
+    "syncFcrReminder": "Sync FCR Reminder Companion"
   },
   "notices": {
     "settingsUpdated": "日历已将您的日历设置更新为新格式。",
@@ -189,7 +195,14 @@
     "milestones": {
       "unlockedTitle": "成就已达成",
       "unlockedBody": "{{title}} - {{description}}"
-    }
+    },
+    "chronoAnalyserDemoLoaded": "ChronoAnalyser demo loaded.",
+    "chronoAnalyserDemoLoadedFromCache": "ChronoAnalyser demo loaded from cache.",
+    "chronoAnalyserDemoLoadFailed": "Could not load the ChronoAnalyser demo. Falling back to live data.",
+    "configureLinkedNotesDirFirst": "Please configure a Linked Notes Directory in settings first.",
+    "failedToCreateLinkedNote": "Failed to create linked note.",
+    "fcrReminderSynced": "FCR Reminder Companion synchronized successfully.",
+    "fcrReminderCompanionOfflineBold": "WARNING: The FCR Reminder Companion daemon is offline. You will NOT receive native desktop notifications until it is started."
   },
   "eventCache": {
     "calendarNotFound": "无法添加事件：未找到 ID 为 {{calendarId}} 的日历。",
@@ -253,6 +266,16 @@
       "clickToCreateEvent": {
         "label": "在月视图中点击日期创建事件",
         "description": "关闭此选项则点击时打开日视图。"
+      },
+      "linkedNotesDirectory": {
+        "label": "Linked notes directory",
+        "description": "Choose the folder path where event linked notes will be created.",
+        "vaultRoot": "/ (Vault Root)"
+      },
+      "linkedNoteTemplate": {
+        "label": "Linked note template",
+        "description": "Define the template used for creating new linked notes. Supports: {{title}}, {{description}}, {{date}}, {{timeString}}, {{location}}, {{calendarName}}, {{url}}",
+        "placeholder": "Enter note Markdown template..."
       }
     },
     "reminders": {
@@ -533,6 +556,14 @@
         "heading": {
           "label": "标题",
           "description": "日记中存储事件的标题。"
+        },
+        "format": {
+          "label": "Format",
+          "description": "Choose how timed events are written in daily notes.",
+          "options": {
+            "default": "Default",
+            "dayPlanner": "DayPlanner Format"
+          }
         }
       },
       "ics": {
@@ -610,6 +641,10 @@
         "bases": "Bases 日历",
         "taskNotes": "TaskNote 集成",
         "outlook": "Outlook calendar"
+      },
+      "linkedNotes": {
+        "title": "Linked Note Settings",
+        "description": "Configure settings for creating local Obsidian notes linked to remote calendar events."
       }
     },
     "categorization": {
@@ -722,6 +757,10 @@
         "scheduled": "计划日期",
         "start": "开始日期",
         "due": "截止日期"
+      },
+      "includeGlobalQueryInBacklog": {
+        "label": "在待办事项中包含全局查询",
+        "description": "将 Obsidian Tasks 全局查询过滤器应用于待办事项视图。"
       },
       "calendarDisplayDateTarget": {
         "label": "日历显示日期字段",
@@ -1280,7 +1319,8 @@
     },
     "notices": {
       "cacheReset": "Event cache has been reset.",
-      "awNotEnabled": "ActivityWatch is not enabled. Enable it in settings first."
+      "awNotEnabled": "ActivityWatch is not enabled. Enable it in settings first.",
+      "fcrCompanionNotEnabled": "FCR Reminder Companion is not enabled. Enable it in settings first."
     }
   },
   "outlook": {
@@ -1344,5 +1384,8 @@
       "unknown": "Unknown error"
     },
     "loading": "Loading..."
+  },
+  "linkedNotes": {
+    "untitledNote": "Untitled Linked Note"
   }
 }

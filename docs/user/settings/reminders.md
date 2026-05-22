@@ -23,4 +23,13 @@ Access these settings in **Full Calendar Settings → Reminders**.
 
 ---
 
+## FCR Reminder Companion Settings
+
+For users utilizing the offline-first [FCR Reminder Companion](../features/fcr-reminder.md), the following settings configure active synchronization:
+
+*   **Enable Companion**: Toggles the synchronization pipeline on or off. When enabled, local Obsidian reminders are automatically suppressed, handing full alerting responsibility over to the companion daemon to prevent duplicate alerts.
+*   **API URL**: The loopback address of the companion app daemon (defaults to `http://127.0.0.1:45677`). The plugin performs liveness status checks on this endpoint during startup.
+
+---
+
 [Workspaces](workspaces.md) · [API and Security](api.md) · [Back to Index](index.md)

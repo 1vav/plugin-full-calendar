@@ -47,6 +47,7 @@ export interface TasksIntegrationSettings {
   calendarDisplayDateTarget: TasksDateTarget;
   openEditModalAfterBacklogDrop: boolean;
   taskDisplayFormat?: TasksDisplayFormat;
+  includeGlobalQueryInBacklog?: boolean;
 }
 
 export interface MilestonesSettings {
@@ -131,6 +132,11 @@ export interface MicrosoftAccount {
   expiryDate: number | null;
 }
 
+export interface FcrReminderCompanionSettings {
+  enabled: boolean;
+  apiUrl: string;
+}
+
 export interface FullCalendarSettings {
   calendarSources: CalendarInfo[];
   defaultCalendar: number;
@@ -175,10 +181,13 @@ export interface FullCalendarSettings {
   activityWatch: ActivityWatchSettings;
   tasksIntegration: TasksIntegrationSettings;
   milestones: MilestonesSettings;
+  fcrReminderCompanion: FcrReminderCompanionSettings;
   apiTokens?: Record<string, ApiTokenRecord>;
   authorizedTokens?: Record<string, { pluginId: string; reason: string; grantedAt: number }>;
 
   currentVersion: string | null;
+  linkedNotesDirectory: string;
+  linkedNoteTemplate: string;
 }
 
 export const DEFAULT_SETTINGS: FullCalendarSettings = {
@@ -241,18 +250,26 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
     backlogDateTarget: 'scheduledDate',
     calendarDisplayDateTarget: 'scheduledDate',
     openEditModalAfterBacklogDrop: false,
-    taskDisplayFormat: 'dayPlanner'
+    taskDisplayFormat: 'dayPlanner',
+    includeGlobalQueryInBacklog: false
   },
   milestones: {
     counters: {},
     unlockedAt: {}
+  },
+  fcrReminderCompanion: {
+    enabled: false,
+    apiUrl: 'http://127.0.0.1:45677'
   },
   apiTokens: {},
   authorizedTokens: {},
 
   enableDefaultReminder: true,
   defaultReminderMinutes: 10,
-  currentVersion: null
+  currentVersion: null,
+  linkedNotesDirectory: '',
+  linkedNoteTemplate:
+    '# {{title}}\n\n**Date**: {{date}}\n**Time**: {{timeString}}\n**Location**: {{location}}\n**Calendar**: {{calendarName}}\n\n## Description\n{{description}}\n\n## Notes\n- '
 };
 
 // Utility functions for workspace management

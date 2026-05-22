@@ -132,6 +132,11 @@
         "duration": "Durée (h)",
         "date": "Date",
         "filePath": "Chemin du fichier"
+      },
+      "demo": {
+        "title": "DEMO MODE",
+        "description": "You are exploring sample ChronoAnalyser data. Configure your own insight groups to switch permanently to live data.",
+        "turnOff": "Turn off demo"
       }
     }
   },
@@ -143,7 +148,8 @@
     "openChronoAnalyser": "Ouvrir Chrono Analyser (Desktop uniquement)",
     "openSidebar": "Ouvrir dans la barre latérale",
     "syncActivityWatch": "Synchroniser ActivityWatch",
-    "nlpQuickAdd": "FCR Command"
+    "nlpQuickAdd": "FCR Command",
+    "syncFcrReminder": "Sync FCR Reminder Companion"
   },
   "notices": {
     "settingsUpdated": "Full Calendar a mis à jour vos paramètres de calendrier vers un nouveau format.",
@@ -189,7 +195,14 @@
     "milestones": {
       "unlockedTitle": "Jalon débloqué",
       "unlockedBody": "{{title}} - {{description}}"
-    }
+    },
+    "chronoAnalyserDemoLoaded": "ChronoAnalyser demo loaded.",
+    "chronoAnalyserDemoLoadedFromCache": "ChronoAnalyser demo loaded from cache.",
+    "chronoAnalyserDemoLoadFailed": "Could not load the ChronoAnalyser demo. Falling back to live data.",
+    "configureLinkedNotesDirFirst": "Please configure a Linked Notes Directory in settings first.",
+    "failedToCreateLinkedNote": "Failed to create linked note.",
+    "fcrReminderSynced": "FCR Reminder Companion synchronized successfully.",
+    "fcrReminderCompanionOfflineBold": "WARNING: The FCR Reminder Companion daemon is offline. You will NOT receive native desktop notifications until it is started."
   },
   "eventCache": {
     "calendarNotFound": "Impossible d'ajouter l'événement : calendrier avec l'ID {{calendarId}} introuvable.",
@@ -253,6 +266,16 @@
       "clickToCreateEvent": {
         "label": "Cliquer sur un jour en vue mois pour créer un événement",
         "description": "Désactivez pour ouvrir la vue jour au lieu de créer un événement."
+      },
+      "linkedNotesDirectory": {
+        "label": "Linked notes directory",
+        "description": "Choose the folder path where event linked notes will be created.",
+        "vaultRoot": "/ (Vault Root)"
+      },
+      "linkedNoteTemplate": {
+        "label": "Linked note template",
+        "description": "Define the template used for creating new linked notes. Supports: {{title}}, {{description}}, {{date}}, {{timeString}}, {{location}}, {{calendarName}}, {{url}}",
+        "placeholder": "Enter note Markdown template..."
       }
     },
     "reminders": {
@@ -533,6 +556,14 @@
         "heading": {
           "label": "En-tête",
           "description": "En-tête sous lequel stocker les événements dans la note quotidienne."
+        },
+        "format": {
+          "label": "Format",
+          "description": "Choose how timed events are written in daily notes.",
+          "options": {
+            "default": "Default",
+            "dayPlanner": "DayPlanner Format"
+          }
         }
       },
       "ics": {
@@ -610,6 +641,10 @@
         "bases": "Calendrier Bases",
         "taskNotes": "Intégration TaskNote",
         "outlook": "Outlook calendar"
+      },
+      "linkedNotes": {
+        "title": "Linked Note Settings",
+        "description": "Configure settings for creating local Obsidian notes linked to remote calendar events."
       }
     },
     "categorization": {
@@ -726,6 +761,10 @@
       "openEditModalAfterBacklogDrop": {
         "label": "Ouvrir la fenêtre d'édition Tasks après dépôt du backlog",
         "description": "Ouvre immédiatement la fenêtre d'édition Tasks d'Obsidian après avoir glissé une tâche du backlog sur le calendrier."
+      },
+      "includeGlobalQueryInBacklog": {
+        "label": "Inclure la requête globale dans le backlog",
+        "description": "Appliquer les filtres de la requête globale d'Obsidian Tasks à la vue backlog."
       },
       "calendarDisplayDateTarget": {
         "label": "Champ de date d'affichage du calendrier",
@@ -1280,7 +1319,8 @@
     },
     "notices": {
       "cacheReset": "Le cache des événements a été réinitialisé.",
-      "awNotEnabled": "ActivityWatch n'est pas activé. Activez-le d'abord dans les paramètres."
+      "awNotEnabled": "ActivityWatch n'est pas activé. Activez-le d'abord dans les paramètres.",
+      "fcrCompanionNotEnabled": "FCR Reminder Companion is not enabled. Enable it in settings first."
     }
   },
   "outlook": {
@@ -1344,5 +1384,8 @@
       "unknown": "Unknown error"
     },
     "loading": "Loading..."
+  },
+  "linkedNotes": {
+    "untitledNote": "Untitled Linked Note"
   }
 }

@@ -59,6 +59,11 @@
     "analyser": {
       "header": "📊 ChronoAnalyser",
       "subtitle": "Interactive analysis of your time tracking data",
+      "demo": {
+        "title": "DEMO MODE",
+        "description": "You are exploring sample ChronoAnalyser data. Configure your own insight groups to switch permanently to live data.",
+        "turnOff": "Turn off demo"
+      },
       "proTip": "Pro tip",
       "clickNextTip": "Click to see the next tip",
       "insights": {
@@ -147,7 +152,8 @@
     "openChronoAnalyser": "Open ChronoAnalyser (Desktop Only)",
     "openSidebar": "Open in sidebar",
     "syncActivityWatch": "Sync ActivityWatch",
-    "nlpQuickAdd": "FCR Command"
+    "nlpQuickAdd": "FCR Command",
+    "syncFcrReminder": "Sync FCR Reminder Companion"
   },
   "notices": {
     "settingsUpdated": "Full Calendar has updated your calendar settings to a new format.",
@@ -159,6 +165,9 @@
     "chronoAnalyserGeneratingInsights": "Generating insights (this may take a moment)...",
     "chronoAnalyserInsightsFailed": "Failed to generate insights. Check the developer console for errors.",
     "chronoAnalyserInsightsSaved": "Insights configuration saved!",
+    "chronoAnalyserDemoLoaded": "ChronoAnalyser demo loaded.",
+    "chronoAnalyserDemoLoadedFromCache": "ChronoAnalyser demo loaded from cache.",
+    "chronoAnalyserDemoLoadFailed": "Could not load the ChronoAnalyser demo. Falling back to live data.",
     "googleAuthFailed": "Google authentication failed. Please try again.",
     "bulkUpdateError": "Error during bulk update. Check console for details.",
     "providerNotRegistered": "{{providerType}} provider is not registered.",
@@ -166,7 +175,11 @@
     "revalidatingRemotes": "Revalidating remote calendars...",
     "revalidationFailed": "One or more remote calendars failed to load. Check the console for details.",
     "revalidationSuccess": "Remote calendars revalidated.",
+    "fcrReminderSynced": "FCR Reminder Companion synchronized successfully.",
+    "fcrReminderCompanionOfflineBold": "WARNING: The FCR Reminder Companion daemon is offline. You will NOT receive native desktop notifications until it is started.",
     "cannotOpenRemote": "Cannot open note for a remote event.",
+    "configureLinkedNotesDirFirst": "Please configure a Linked Notes Directory in settings first.",
+    "failedToCreateLinkedNote": "Failed to create linked note.",
     "bulkCategorization": {
       "noNotesFound": "No local event notes found to categorize.",
       "complete": "Bulk categorization complete."
@@ -257,6 +270,16 @@
       "clickToCreateEvent": {
         "label": "Click on a day in month view to create event",
         "description": "Switch off to open day view on click instead."
+      },
+      "linkedNotesDirectory": {
+        "label": "Linked notes directory",
+        "description": "Choose the folder path where event linked notes will be created.",
+        "vaultRoot": "/ (Vault Root)"
+      },
+      "linkedNoteTemplate": {
+        "label": "Linked note template",
+        "description": "Define the template used for creating new linked notes. Supports: {{title}}, {{description}}, {{date}}, {{timeString}}, {{location}}, {{calendarName}}, {{url}}",
+        "placeholder": "Enter note Markdown template..."
       }
     },
     "reminders": {
@@ -511,6 +534,10 @@
       "title": "Manage calendars",
       "addCalendar": "Add calendar",
       "addCalendarTooltip": "Add Calendar",
+      "linkedNotes": {
+        "title": "Linked Note Settings",
+        "description": "Configure settings for creating local Obsidian notes linked to remote calendar events."
+      },
       "defaults": {
         "iCloud": "iCloud Calendar",
         "new": "New {{type}} Calendar"
@@ -537,6 +564,14 @@
         "heading": {
           "label": "Heading",
           "description": "Heading to store events under in the daily note."
+        },
+        "format": {
+          "label": "Format",
+          "description": "Choose how timed events are written in daily notes.",
+          "options": {
+            "default": "Default",
+            "dayPlanner": "DayPlanner Format"
+          }
         }
       },
       "ics": {
@@ -734,6 +769,10 @@
       "openEditModalAfterBacklogDrop": {
         "label": "Open Tasks edit modal after backlog drop",
         "description": "Open the Obsidian Tasks edit modal immediately after dragging a task from the backlog onto the calendar."
+      },
+      "includeGlobalQueryInBacklog": {
+        "label": "Include global query in the backlog",
+        "description": "Apply the Obsidian Tasks global query filters to the backlog view."
       },
       "taskDisplayFormat": {
         "label": "Task time format",
@@ -1342,7 +1381,11 @@
     },
     "notices": {
       "cacheReset": "Event cache has been reset.",
-      "awNotEnabled": "ActivityWatch is not enabled. Enable it in settings first."
+      "awNotEnabled": "ActivityWatch is not enabled. Enable it in settings first.",
+      "fcrCompanionNotEnabled": "FCR Reminder Companion is not enabled. Enable it in settings first."
     }
+  },
+  "linkedNotes": {
+    "untitledNote": "Untitled Linked Note"
   }
 }

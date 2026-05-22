@@ -14,6 +14,79 @@ export interface Version {
 // Add new versions to the TOP of this array.
 export const changelogData: Version[] = [
   {
+    version: '0.13.2',
+    changes: [
+      {
+        type: 'new',
+        title:
+          'HOT-beta: Link [unique notes](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/event-linked-notes/) to Remote events ([CalDAV](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/caldav/), [Google](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/gcal/), [Outlook](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/outlook/))',
+        description:
+          'Added automatic [linked note](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/event-linked-notes/) creation for events with templates, metadata linking, and seamless integration across providers with UI controls.'
+      },
+      {
+        type: 'new',
+        title:
+          '[ChronoAnalyser](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/chrono_analyser/introduction/) & Dynamic Assets',
+        description:
+          'Introduced [ChronoAnalyser](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/chrono_analyser/introduction/) demo and added dynamic [i18n](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/i18n/)/[NLP](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/nlp/) asset loading with remote synchronization and automatic version-based refresh.'
+      },
+      {
+        type: 'new',
+        title: 'Tasks Global Query Filtering',
+        description:
+          'Added support for [Obsidian Tasks](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/tasks-plugin-integration/#supported-global-query-syntax) global query in backlog, enabling advanced filtering (tags, folders, priority, regex) via new setting.'
+      },
+      {
+        type: 'new',
+        title:
+          '[CalDAV](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/caldav/) VTODO Support',
+        description:
+          'Extended [CalDAV](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/caldav/) to support tasks (VTODO) with improved fetching and consistency.'
+      },
+      {
+        type: 'new',
+        title:
+          '[Unified Reminders](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/reminders/) & [FCR Companion](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/fcr-reminder/)',
+        description:
+          'Introduced [centralized reminder engine](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/reminders/) with [FCR Reminder Companion App](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/fcr-reminder/) integration, including background sync, manual sync command, and improved reliability.'
+      },
+      {
+        type: 'improvement',
+        title:
+          '[Timezone](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/architecture/system/features/timezone-architecture/) Handling (ICS/[CalDAV](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/caldav/))',
+        description:
+          'Improved [timezone](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/architecture/system/features/timezone-architecture/) accuracy for events with correct TZID handling and consistent UTC/local serialization.'
+      },
+      {
+        type: 'improvement',
+        title:
+          '[Event Cache](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/architecture/system/eventcache/) & UI Refresh',
+        description:
+          'Optimized calendar refresh behavior to avoid full reloads, improving performance and visual stability during updates.'
+      },
+      {
+        type: 'fix',
+        title:
+          '[Google](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/gcal/) & [Outlook](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/outlook/) Settings Issues',
+        description:
+          'Fixed provider settings state inconsistencies affecting calendar configuration and updates.'
+      },
+      {
+        type: 'fix',
+        title:
+          '[Daily Note](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/dailynote/) Notify Serialization',
+        description:
+          'Resolved issue where reminder metadata was incorrectly stored as object strings.'
+      },
+      {
+        type: 'fix',
+        title: 'Instance Initialization & Sync',
+        description:
+          'Fixed issues where [calendar instances](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/architecture/calendars/architecture/) and sources were not updating correctly during initialization.'
+      }
+    ]
+  },
+  {
     version: '0.13.1',
     changes: [
       {
@@ -121,81 +194,6 @@ export const changelogData: Version[] = [
         title: 'Build, docs, and i18n',
         description:
           'Reduced startup and bundle overhead, refreshed locale loading, and added ActivityWatch architecture documentation.'
-      }
-    ]
-  },
-  {
-    version: '0.12.8',
-    changes: [
-      {
-        type: 'new',
-        title: 'Tasks Time Features',
-        description:
-          'Tasks can now have an optional time block. Drag and drop a task to a specific time or back to all-day to update it. (#227)'
-      },
-      {
-        type: 'new',
-        title: 'CalDAV enhancements',
-        description:
-          'Auto-fetch calendar name and color when importing, validate collection. (#230)'
-      },
-      {
-        type: 'improvement',
-        title: 'Advanced Categorization',
-        description:
-          'Robust advanced categorization workflows and modal UX. Added "Disable without cleanup" option. (#222, #231)'
-      },
-      {
-        type: 'improvement',
-        title: 'Robust Timezone Handling',
-        description:
-          'Prevent RRULE TZID one-day date shift in recurrence expansion (#194) and prevent timezone shift for all-day date-only events. (#223, #231)'
-      },
-      {
-        type: 'fix',
-        title: 'Provider Sync & Remote Payloads',
-        description:
-          'Refactored file delete handling during rename races. (#224) Hardened CalDAV payload parsing for null-body and malformed XML. (#218)'
-      },
-      {
-        type: 'fix',
-        title: 'Localization & Mobile UI',
-        description:
-          'Updated UI responsiveness on desktop & mobile. Workspace filters now display user-defined calendar names. Updated ES/FR/IT translations.'
-      }
-    ]
-  },
-  {
-    version: '0.12.7.1',
-    changes: [
-      {
-        type: 'new',
-        title: 'Local ICS Support',
-        description: 'You can now view `.ics` files stored directly in your Obsidian vault!'
-      },
-      {
-        type: 'improvement',
-        title: 'Timezone & DST Hardening',
-        description:
-          'The timezone pipeline has been completely rewritten and hardened to properly handle recurring events crossing Daylight Saving Time boundaries, and complex EU/US transit scenarios without drifting. Removed luxon dependency.'
-      },
-      {
-        type: 'improvement',
-        title: 'Staged Loading Architecture viz v0.12.7.1',
-        description:
-          'Dramatic startup performance improvements (5x in [selective audit](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/changelog/#version-01271)). Providers now quickly load a 3-month window surrounding the current date first, then quietly load your full calendar history in the background.'
-      },
-      {
-        type: 'improvement',
-        title: 'Codebase Linting & Safety',
-        description:
-          'Migrated to ESLint 9 and native obsidianmd rules. Eliminated unsafe casting and improved the UI responsiveness by wrapping unhandled background promises.'
-      },
-      {
-        type: 'fix',
-        title: 'UI Fixes and LiveSync Compatibility',
-        description:
-          'Improved mobile responsiveness across various views. Fixed UI injection conflicts with the Self-Hosted LiveSync plugin.'
       }
     ]
   }

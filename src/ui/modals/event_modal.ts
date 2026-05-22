@@ -28,7 +28,7 @@ import { EditEvent } from './EditEvent';
 import { EventDetails } from './EventDetails';
 import FullCalendarPlugin from '../../main';
 import { ConfirmModal } from './ConfirmModal';
-import { openFileForEvent } from '../../utils/eventActions';
+import { openFileForEvent, openOrCreateLinkedNote } from '../../utils/eventActions';
 import { t } from '../../features/i18n/i18n';
 
 export function launchCreateModal(
@@ -164,7 +164,7 @@ export function launchEditModal(plugin: FullCalendarPlugin, eventId: string) {
         availableCategories,
         enableCategory: PluginState.getSettings().enableAdvancedCategorization,
         enableBackgroundEvents: PluginState.getSettings().enableBackgroundEvents,
-        enableReminders: PluginState.getSettings().enableReminders, // ADD THIS PROP
+        enableReminders: PluginState.getSettings().enableReminders,
         submit: async (data, calendarIndex) => {
           try {
             const newCalendarSettingsId = calendars[calendarIndex].id;
@@ -188,7 +188,12 @@ export function launchEditModal(plugin: FullCalendarPlugin, eventId: string) {
           closeModal();
         },
         open: async () => {
-          await openFileForEvent(PluginState.getCache(), plugin.app, eventId);
+          const details = PluginState.getCache().store.getEventDetails(eventId);
+          if (details && details.location) {
+            await openFileForEvent(PluginState.getCache(), plugin.app, eventId);
+          } else {
+            await openOrCreateLinkedNote(plugin, calId, eventToEdit, true);
+          }
           closeModal();
         },
         deleteEvent: async () => {
@@ -228,6 +233,21 @@ export function launchEventDetailsModal(plugin: FullCalendarPlugin, eventId: str
   const location = eventDetails.location;
 
   new ReactModal(plugin.app, closeModal => {
+    const provider = PluginState.getProviderRegistry().getInstance(calendarId);
+    const linkedNoteProvider = provider as unknown as {
+      createLinkedNote?: (event: OFCEvent) => Promise<unknown>;
+    };
+    const hasCreateLinkedNote =
+      linkedNoteProvider && typeof linkedNoteProvider.createLinkedNote === 'function';
+    const onCreateLinkedNote = hasCreateLinkedNote
+      ? () => {
+          void (async () => {
+            closeModal();
+            await openOrCreateLinkedNote(plugin, calendarId, event, false);
+          })();
+        }
+      : undefined;
+
     return Promise.resolve(
       React.createElement(EventDetails, {
         event,
@@ -241,7 +261,8 @@ export function launchEventDetailsModal(plugin: FullCalendarPlugin, eventId: str
                 closeModal();
               })();
             }
-          : undefined
+          : undefined,
+        onCreateLinkedNote
       })
     );
   }).open();

@@ -3,6 +3,11 @@
 !!! abstract "Feature Overview"
     Full Calendar provides a robust, native notification system to keep you on track. It integrates with your operating system's notification center and provides interactive modals for immediate action.
 
+!!! tip "Recommended"
+    For offline OS native reminder use the [FCR Reminder](#offline-alerts-with-fcr-reminder-companion) companion. This will work even when Obsidian is closed!
+
+
+
 ## Configuration
 
 In **Settings → Reminders**, you can define the baseline behavior:
@@ -41,4 +46,18 @@ For a detailed breakdown of how different event types are shifted during a snooz
 
 ---
 
-[Status Bar Integration](statusbar.md) · [Technical Architecture](../../architecture/system/features/reminders-architecture.md) · [Troubleshooting](../guides/troubleshooting.md#why-are-my-reminders-not-firing)
+## Offline Alerts with FCR Reminder Companion
+
+Standard reminders rely on Obsidian running in the background. If you close Obsidian, you may miss important notifications. To solve this, you can enable the **[FCR Reminder Companion](fcr-reminder.md)**.
+
+When enabled:  
+
+*   Standard Obsidian toast alerts and interactive modal popups are **automatically bypassed** while Obsidian is open to prevent duplicates.
+*   Alerting is delegated entirely to a lightweight loopback background daemon.
+*   You receive native OS-level toast notifications that deep-link directly to your Obsidian notes even when Obsidian is completely closed.
+
+➡️ [FCR Companion App Releases](https://github.com/obsidian-full-calendar-remastered/FCR-Reminder-Companion-App/releases) | [Documentation](https://obsidian-full-calendar-remastered.github.io/FCR-Reminder-Companion-App/)
+
+---
+
+[Status Bar Integration](statusbar.md) · [FCR Reminder Companion](fcr-reminder.md) · [Technical Architecture](../../architecture/system/features/reminders-architecture.md) · [Troubleshooting](../guides/troubleshooting.md#why-are-my-reminders-not-firing)

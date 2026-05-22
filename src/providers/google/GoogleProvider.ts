@@ -13,6 +13,9 @@ import { GoogleConfigComponent } from './ui/GoogleConfigComponent';
 import * as React from 'react';
 import { ObsidianInterface } from '../../ObsidianAdapter';
 import { GoogleAuthManager } from './auth/GoogleAuthManager';
+import { LinkedNoteIndex } from '../utils/LinkedNoteIndex';
+import { TFile } from 'obsidian';
+import { createLinkedNoteForProvider } from '../../features/linked-notes/linkedNotes';
 
 // Settings row component for Google Provider
 const GoogleNameSetting: React.FC<{ source: Partial<import('../../types').CalendarInfo> }> = ({
@@ -37,7 +40,7 @@ type GoogleConfigProps = {
   config: Partial<GoogleProviderConfig>;
   onConfigChange: (newConfig: Partial<GoogleProviderConfig>) => void;
   context: ProviderConfigContext;
-  onSave: (finalConfig: GoogleProviderConfig | GoogleProviderConfig[]) => void;
+  onSave: (finalConfig: GoogleProviderConfig | GoogleProviderConfig[], accountId?: string) => void;
   onClose: () => void;
 };
 
@@ -52,9 +55,9 @@ const createGoogleConfigWrapper = (
 
     const handleSave = (
       selectedConfigs: { id: string; name: string; color: string }[],
-      _accountId: string
+      accountId: string
     ) => {
-      forwardOnSave(selectedConfigs as unknown as GoogleProviderConfig[]);
+      forwardOnSave(selectedConfigs as unknown as GoogleProviderConfig[], accountId);
     };
 
     if (!plugin) {
@@ -81,6 +84,7 @@ export class GoogleProvider implements CalendarProvider<GoogleProviderConfig>, S
   private plugin: FullCalendarPlugin;
   private source: GoogleProviderConfig;
   private authManager: GoogleAuthManager;
+  public readonly linkedNoteIndex: LinkedNoteIndex;
 
   // Instance properties remain
   readonly type = 'google';
@@ -92,6 +96,15 @@ export class GoogleProvider implements CalendarProvider<GoogleProviderConfig>, S
     this.plugin = plugin;
     this.source = source;
     this.authManager = new GoogleAuthManager(plugin);
+    this.linkedNoteIndex = new LinkedNoteIndex(plugin.app, source.id);
+  }
+
+  initialize(): void {
+    this.linkedNoteIndex.initialize();
+  }
+
+  teardown(): void {
+    this.linkedNoteIndex.destroy();
   }
 
   getCapabilities(): CalendarProviderCapabilities {
@@ -196,7 +209,11 @@ export class GoogleProvider implements CalendarProvider<GoogleProviderConfig>, S
           const validated = validateEvent(rawEvent);
           if (!validated) return null;
 
-          return [validated, null];
+          const linkedFile = this.linkedNoteIndex.getFileForEvent(validated.uid || '');
+          const location = linkedFile
+            ? { file: { path: linkedFile.path }, lineNumber: undefined }
+            : null;
+          return [validated, location];
         }
       );
       return tuples.filter((e): e is [OFCEvent, EventLocation | null] => e !== null);
@@ -398,5 +415,15 @@ export class GoogleProvider implements CalendarProvider<GoogleProviderConfig>, S
     // This method's existence signals to the adapter that this is a remote-style provider.
     // The actual fetching is always done in getEvents.
     return Promise.resolve();
+  }
+
+  async createLinkedNote(event: OFCEvent): Promise<TFile | null> {
+    return createLinkedNoteForProvider({
+      app: this.plugin.app,
+      event,
+      calendarId: this.source.id,
+      calendarName: this.source.name,
+      linkedNoteIndex: this.linkedNoteIndex
+    });
   }
 }

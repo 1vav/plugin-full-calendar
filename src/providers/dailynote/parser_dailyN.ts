@@ -14,7 +14,7 @@ import { CachedMetadata, HeadingCache, ListItemCache, Loc, Pos } from 'obsidian'
 import { DateTime } from 'luxon';
 
 import { OFCEvent, validateEvent } from '../../types';
-import { FullCalendarSettings } from '../../types/settings';
+import { DailyNoteProviderConfig, getDailyNoteEventFormat } from './typesDaily';
 
 // TYPES AND CONSTANTS
 // =================================================================================================
@@ -29,6 +29,7 @@ export const fieldRegex = /\s*\[.*?\]\s*/g;
 export const listRegex = /^(\s*)-\s+(\[(.)\]\s+)?/;
 const checkboxRegex = /^\s*-\s+\[(.)\]\s+/;
 const inlineFieldRegex = /\[([^\]]+):: ?([^\]]+)\]/g;
+const dayPlannerTitleRegex = /^(\d{2}:\d{2}) - (\d{2}:\d{2}) (.+)$/;
 
 // INTERNAL HELPERS
 // =================================================================================================
@@ -40,6 +41,21 @@ const checkboxTodo = (s: string) => {
   const match = s.match(checkboxRegex);
   if (!match || !match[1]) return null;
   return match[1] === ' ' ? false : match[1];
+};
+
+const parseDayPlannerTitle = (
+  rawTitle: string
+): { startTime: string; endTime: string; title: string } | null => {
+  const match = rawTitle.match(dayPlannerTitleRegex);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    startTime: match[1],
+    endTime: match[2],
+    title: match[3]
+  };
 };
 
 const getHeadingPosition = (
@@ -64,6 +80,21 @@ const getHeadingPosition = (
   return { start: startingPos.end, end: endingPos?.start || endOfDoc };
 };
 
+const serializeInlineAttributeValue = (value: unknown): string => {
+  if (typeof value === 'object' && value !== null && 'value' in value) {
+    const nestedValue = (value as { value: unknown }).value;
+    if (
+      typeof nestedValue === 'string' ||
+      typeof nestedValue === 'number' ||
+      typeof nestedValue === 'boolean'
+    ) {
+      return String(nestedValue);
+    }
+  }
+
+  return String(value);
+};
+
 export const getListsUnderHeading = (
   headingText: string,
   metadata: CachedMetadata
@@ -82,14 +113,14 @@ export const getListsUnderHeading = (
 
 const generateInlineAttributes = (attrs: Record<string, unknown>): string => {
   return Object.entries(attrs)
-    .map(([k, v]) => `[${k}:: ${String(v)}]`)
+    .map(([k, v]) => `[${k}:: ${serializeInlineAttributeValue(v)}]`)
     .join('  ');
 };
 
 const makeListItem = (
   data: OFCEvent,
   whitespacePrefix: string = '',
-  _settings: FullCalendarSettings
+  source: Pick<DailyNoteProviderConfig, 'format'>
 ): string => {
   if (data.type !== 'single') throw new Error('Can only pass in single event.');
   const { completed, title } = data;
@@ -100,9 +131,15 @@ const makeListItem = (
     return null;
   })();
 
-  const titleToWrite = title;
+  const useDayPlannerFormat =
+    getDailyNoteEventFormat(source) === 'dayPlanner' &&
+    !data.allDay &&
+    typeof data.startTime === 'string' &&
+    typeof data.endTime === 'string';
 
-  const attrs: Partial<OFCEvent> = { ...data };
+  const titleToWrite = useDayPlannerFormat ? `${data.startTime} - ${data.endTime} ${title}` : title;
+
+  const attrs: Record<string, unknown> = { ...data };
   // If endDate is present but is the same as the start date, nullify it so it isn't written to the file.
   if (attrs.endDate && attrs.date === attrs.endDate) {
     attrs.endDate = null;
@@ -115,7 +152,12 @@ const makeListItem = (
   delete attrs['category'];
   delete attrs['subCategory'];
 
-  for (const key of <(keyof OFCEvent)[]>Object.keys(attrs)) {
+  if (useDayPlannerFormat) {
+    delete attrs['startTime'];
+    delete attrs['endTime'];
+  }
+
+  for (const key of Object.keys(attrs)) {
     if (attrs[key] === undefined || attrs[key] === null) {
       delete attrs[key];
     }
@@ -148,20 +190,27 @@ export const getInlineEventFromLine = (
 
   const titleWithExtraSpaces = text.replace(listRegex, '').replace(fieldRegex, '');
   const rawTitle = titleWithExtraSpaces.replace(/\s+/g, ' ').trim();
+  const hasDefaultTimeFields =
+    typeof attrs.startTime === 'string' || typeof attrs.endTime === 'string';
+  const dayPlannerTitle = hasDefaultTimeFields ? null : parseDayPlannerTitle(rawTitle);
+  const parsedAttrs = dayPlannerTitle
+    ? { ...attrs, startTime: dayPlannerTitle.startTime, endTime: dayPlannerTitle.endTime }
+    : attrs;
+  const resolvedTitle = dayPlannerTitle ? dayPlannerTitle.title : rawTitle;
 
-  if (!rawTitle && !hasInlineFields) {
+  if (!resolvedTitle && !hasInlineFields) {
     return null;
   }
 
-  const eventData: Partial<OFCEvent> = { title: rawTitle };
+  const eventData: Partial<OFCEvent> = { title: resolvedTitle };
 
-  const allDay = !('startTime' in attrs && !!attrs.startTime);
+  const allDay = !('startTime' in parsedAttrs && !!parsedAttrs.startTime);
 
   const attrsForValidation: Record<string, unknown> = {
     ...eventData,
     completed: checkboxTodo(text),
     ...globals,
-    ...attrs,
+    ...parsedAttrs,
     allDay
   };
 
@@ -211,23 +260,23 @@ export function getAllInlineEventsFromFile(
 export const modifyListItem = (
   line: string,
   data: OFCEvent,
-  settings: FullCalendarSettings
+  source: Pick<DailyNoteProviderConfig, 'format'>
 ): string | null => {
   const listMatch = line.match(listRegex);
   if (!listMatch) {
     console.warn("Tried modifying a list item with a position that wasn't a list item", { line });
     return null;
   }
-  return makeListItem(data, listMatch[1], settings);
+  return makeListItem(data, listMatch[1], source);
 };
 
 export const addToHeading = (
   page: string,
   { heading, item, headingText }: AddToHeadingProps,
-  settings: FullCalendarSettings
+  source: Pick<DailyNoteProviderConfig, 'format'>
 ): { page: string; lineNumber: number } => {
   const lines = page.split('\n');
-  const listItem = makeListItem(item, '', settings);
+  const listItem = makeListItem(item, '', source);
   if (heading) {
     const headingLine = heading.position.start.line;
     const lineNumber = headingLine + 1;

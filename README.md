@@ -1,7 +1,7 @@
 <div align="right">
   <img src="https://img.shields.io/github/downloads/obsidian-full-calendar-remastered/plugin-full-calendar/total?label=Downloads" alt="Downloads" />
   <a href="#contributors-"><img src="https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square" alt="All Contributors" /></a>
-  <a href="https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/"><img src="https://img.shields.io/badge/Version-v_0.13.1-blue" alt="Version" /></a>
+  <a href="https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/"><img src="https://img.shields.io/badge/Version-v_0.13.2-blue" alt="Version" /></a>
 </div>
 
 
@@ -9,14 +9,9 @@
 
 # Full Calendar (Remastered) Plugin
 
-<video width="720" controls>
-  <source src="https://raw.githubusercontent.com/obsidian-full-calendar-remastered/plugin-full-calendar/main/docs/assets/guides/0.13.1.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
 > This is the remastered edition of original [Full Calender plugin](https://github.com/obsidian-community/obsidian-full-calendar) by [Davis Haupt](https://davi.sh/), with the [core additions](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/whats_new/).
 
-Keep your calendar in your vault! This plugin integrates the [FullCalendar](https://github.com/fullcalendar/fullcalendar) library into your Obsidian Vault so that you can keep your ever-changing daily schedule and special events and plans alongside your tasks and notes, and link freely between all of them. Each event is stored as a separate note with special frontmatter so you can take notes, form connections and add context to any event on your calendar.
+Keep your calendar in your vault! This plugin integrates the [FullCalendar](https://github.com/fullcalendar/fullcalendar) library into your Obsidian Vault so that you can keep your ever-changing daily schedule and special events and plans alongside your tasks and notes, and link freely between all of them.
 
 > Checkout the [Documentation](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/); [Development Timeline](https://github.com/users/YouFoundJK/projects/2) for the development timeline.
 
@@ -28,8 +23,12 @@ Full Calendar supports multiple calendar sources:
 - [**CalDAV**](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/caldav/): Two-way sync with CalDAV servers
 - [**Google Calendar**](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/gcal/): Two-way sync with Google Calendar
 - [**Bases**](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/bases/): Integrate with the Obsidian Bases plugin
-- [**Tasks Plugin**](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/tasks-plugin-integration/): Sync with the Obsidian Tasks plugin
 
+Integrations include
+
+- [**Tasks Plugin**](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/tasks-plugin-integration/): Sync with the Obsidian Tasks plugin
+- [**TaskNote Integration**](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/tasknotes/): Sync with TaskNote Plugin
+- [**ActivityWatcher Integration**](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/tasknotes/): Integrates into [ActivityWatcher](https://activitywatch.net/).
 
 ![Sample Calendar](https://raw.githubusercontent.com/obsidian-full-calendar-remastered/plugin-full-calendar/main/docs/assets/guides/sample-calendar.png)
 
@@ -50,13 +49,7 @@ If this project has helped you consider supporting:
 
 ## Installation
 
-You can also head over to the [releases page](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/releases/latest) and unzip the latest release inside of the `.obsidian/plugins` directory inside your vault.
-
-Or install via **BRAT**:
-
-1. Install the [Obsidian42 BRAT](https://github.com/TfTHacker/obsidian42-brat) community plugin.
-2. In BRAT, add this repo URL: `https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar`.
-3. Click **Add Plugin** and let Obsidian download it. Restart if prompted.
+Add to your obsidian wall from the [Obsidian Plugin Store](https://community.obsidian.md/plugins/full-calendar-remastered).
 
 
 ## Contributors ✨

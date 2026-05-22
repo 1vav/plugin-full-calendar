@@ -262,4 +262,170 @@ END:VCALENDAR`;
     // Verify exception date is added to rrule's skipDates
     expect(rruleEvent?.skipDates).toContain('2026-03-17');
   });
+
+  it('parses single completed VTODO task', () => {
+    const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VTODO
+UID:task-completed-1
+SUMMARY:Completed Task
+DTSTART:20260520T100000Z
+DUE:20260520T110000Z
+STATUS:COMPLETED
+COMPLETED:20260520T103000Z
+DESCRIPTION:Completed task description
+END:VTODO
+END:VCALENDAR`;
+
+    const events = getEventsFromICS(ics);
+    expect(events).toHaveLength(1);
+    const task = events[0];
+    expect(task.uid).toBe('task-completed-1');
+    expect(task.title).toBe('Completed Task');
+    expect(task.type).toBe('single');
+    expect(task.description).toBe('Completed task description');
+    expect(task.type).toBe('single');
+    if (task.type !== 'single') {
+      throw new Error('Expected single task');
+    }
+    expect(task.completed).toBeTruthy();
+    expect(typeof task.completed).toBe('string');
+    expect(task.completed).toContain('2026-05-20T10:30:00');
+  });
+
+  it('parses single pending VTODO task', () => {
+    const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VTODO
+UID:task-pending-1
+SUMMARY:Pending Task
+DTSTART;TZID=America/New_York:20260520T100000
+DUE;TZID=America/New_York:20260520T110000
+STATUS:NEEDS-ACTION
+END:VTODO
+END:VCALENDAR`;
+
+    const events = getEventsFromICS(ics);
+    expect(events).toHaveLength(1);
+    const task = events[0];
+    expect(task.uid).toBe('task-pending-1');
+    expect(task.title).toBe('Pending Task');
+    expect(task.type).toBe('single');
+    expect(task.type).toBe('single');
+    expect(task.allDay).toBe(false);
+    if (task.type !== 'single' || task.allDay !== false) {
+      throw new Error('Expected single timed task');
+    }
+    expect(task.completed).toBe(false);
+    expect(task.timezone).toBe('America/New_York');
+    expect(task).toHaveProperty('startTime', '10:00');
+    expect(task).toHaveProperty('endTime', '11:00');
+  });
+
+  it('parses recurring VTODO task', () => {
+    const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VTODO
+UID:task-recurring-1
+SUMMARY:Recurring Task
+DTSTART;VALUE=DATE:20260520
+DUE;VALUE=DATE:20260521
+RRULE:FREQ=WEEKLY;BYDAY=WE
+END:VTODO
+END:VCALENDAR`;
+
+    const events = getEventsFromICS(ics);
+    expect(events).toHaveLength(1);
+    const task = events[0];
+    expect(task.uid).toBe('task-recurring-1');
+    expect(task.title).toBe('Recurring Task');
+    expect(task.type).toBe('rrule');
+    expect(task.type).toBe('rrule');
+    if (task.type !== 'rrule') {
+      throw new Error('Expected recurring task');
+    }
+    expect(task.isTask).toBe(true);
+    expect(task.rrule).toContain('FREQ=WEEKLY');
+    expect(task.allDay).toBe(true);
+  });
+
+  it('parses single all-day VTODO task with only DUE property', () => {
+    const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VTODO
+UID:task-allday-due-only
+SUMMARY:All-Day Task Due Only
+DUE;VALUE=DATE:20260520
+STATUS:NEEDS-ACTION
+END:VTODO
+END:VCALENDAR`;
+
+    const events = getEventsFromICS(ics);
+    expect(events).toHaveLength(1);
+    const task = events[0];
+    expect(task.uid).toBe('task-allday-due-only');
+    expect(task.title).toBe('All-Day Task Due Only');
+    expect(task.type).toBe('single');
+    if (task.type !== 'single') {
+      throw new Error('Expected single task');
+    }
+    expect(task.allDay).toBe(true);
+    expect(task.date).toBe('2026-05-20');
+    expect(task.endDate).toBeNull();
+    expect(task.completed).toBe(false);
+  });
+
+  it('parses single all-day VTODO task with matching DTSTART and DUE properties', () => {
+    const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VTODO
+UID:task-allday-matching-start-due
+SUMMARY:All-Day Task Matching Start Due
+DTSTART;VALUE=DATE:20260520
+DUE;VALUE=DATE:20260520
+STATUS:NEEDS-ACTION
+END:VTODO
+END:VCALENDAR`;
+
+    const events = getEventsFromICS(ics);
+    expect(events).toHaveLength(1);
+    const task = events[0];
+    expect(task.uid).toBe('task-allday-matching-start-due');
+    expect(task.title).toBe('All-Day Task Matching Start Due');
+    expect(task.type).toBe('single');
+    if (task.type !== 'single') {
+      throw new Error('Expected single task');
+    }
+    expect(task.allDay).toBe(true);
+    expect(task.date).toBe('2026-05-20');
+    expect(task.endDate).toBeNull();
+    expect(task.completed).toBe(false);
+  });
+
+  it('parses single all-day VTODO task with different DTSTART and DUE properties', () => {
+    const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VTODO
+UID:task-allday-diff-start-due
+SUMMARY:All-Day Task Different Start Due
+DTSTART;VALUE=DATE:20260520
+DUE;VALUE=DATE:20260522
+STATUS:NEEDS-ACTION
+END:VTODO
+END:VCALENDAR`;
+
+    const events = getEventsFromICS(ics);
+    expect(events).toHaveLength(1);
+    const task = events[0];
+    expect(task.uid).toBe('task-allday-diff-start-due');
+    expect(task.title).toBe('All-Day Task Different Start Due');
+    expect(task.type).toBe('single');
+    if (task.type !== 'single') {
+      throw new Error('Expected single task');
+    }
+    expect(task.allDay).toBe(true);
+    expect(task.date).toBe('2026-05-20');
+    expect(task.endDate).toBe('2026-05-22');
+    expect(task.completed).toBe(false);
+  });
 });
