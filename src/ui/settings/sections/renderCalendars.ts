@@ -13,7 +13,7 @@ import { addCalendarButton } from '../SettingsTab';
 import { CalendarSettings, CalendarSettingsRef } from './calendars/CalendarSetting';
 import { CalendarInfo } from '../../../types/calendar_settings';
 import { t } from '../../../features/i18n/i18n';
-import { createDocsLinksFragment } from '../docsLinks';
+import { createDescWithDocs, createDocsLinksFragment } from '../docsLinks';
 
 export function renderCalendarManagement(
   containerEl: HTMLElement,
@@ -23,7 +23,14 @@ export function renderCalendarManagement(
   new Setting(containerEl)
     .setName(t('settings.calendars.linkedNotes.title'))
     .setHeading()
-    .setDesc(t('settings.calendars.linkedNotes.description'));
+    .setDesc(
+      createDescWithDocs(t('settings.calendars.linkedNotes.description'), [
+        {
+          text: t('settings.calendars.linkedNotes.learnMore'),
+          path: 'user/features/event-linked-notes'
+        }
+      ])
+    );
 
   new Setting(containerEl)
     .setName(t('settings.general.linkedNotesDirectory.label'))

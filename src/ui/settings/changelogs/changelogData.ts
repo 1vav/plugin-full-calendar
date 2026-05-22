@@ -18,15 +18,19 @@ export const changelogData: Version[] = [
     changes: [
       {
         type: 'new',
-        title:
-          'HOT-beta: Link [unique notes](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/event-linked-notes/) to Remote events ([CalDAV](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/caldav/), [Google](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/gcal/), [Outlook](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/outlook/))',
+        title: 'HOT: Link unique notes to Remote events with templates, metadata, and UI controls',
         description:
-          'Added automatic [linked note](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/event-linked-notes/) creation for events with templates, metadata linking, and seamless integration across providers with UI controls.'
+          'Added automatic [linked note](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/event-linked-notes/) creation for events with templates, metadata linking, and seamless integration across providers with UI controls. Supports [CalDAV](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/caldav/), [Google](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/gcal/), [Outlook](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/outlook/)'
       },
       {
         type: 'new',
-        title:
-          '[ChronoAnalyser](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/chrono_analyser/introduction/) & Dynamic Assets',
+        title: 'HOT-beta: Unified Reminders & FCR Companion for OS native notifications',
+        description:
+          'Introducing [centralized reminder engine](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/reminders/) with [FCR Reminder Companion App](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/fcr-reminder/) integration, including background sync, manual sync command, and improved reliability even when obsidian is not running.'
+      },
+      {
+        type: 'new',
+        title: 'ChronoAnalyser Demo for easy onboarding',
         description:
           'Introduced [ChronoAnalyser](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/chrono_analyser/introduction/) demo and added dynamic [i18n](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/i18n/)/[NLP](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/nlp/) asset loading with remote synchronization and automatic version-based refresh.'
       },
@@ -42,13 +46,6 @@ export const changelogData: Version[] = [
           '[CalDAV](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/caldav/) VTODO Support',
         description:
           'Extended [CalDAV](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/caldav/) to support tasks (VTODO) with improved fetching and consistency.'
-      },
-      {
-        type: 'new',
-        title:
-          '[Unified Reminders](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/reminders/) & [FCR Companion](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/fcr-reminder/)',
-        description:
-          'Introduced [centralized reminder engine](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/reminders/) with [FCR Reminder Companion App](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/fcr-reminder/) integration, including background sync, manual sync command, and improved reliability.'
       },
       {
         type: 'improvement',

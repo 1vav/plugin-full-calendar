@@ -50,6 +50,16 @@
       "folderSelectPlaceholder": "选择一个包含时间追踪文件的文件夹...",
       "errors": {
         "groupExists": "组名称\"{{name}}\"已存在。"
+      },
+      "docs": {
+        "configurationGuide": "Configuration guide",
+        "matchingRules": "Matching rules",
+        "faq": "FAQ",
+        "personaGuide": "Persona guide",
+        "insightsGuide": "Insight reference",
+        "ruleParameters": "Rule parameters",
+        "terminology": "Terminology",
+        "filtersGuide": "Filter syntax"
       }
     },
     "analyser": {
@@ -644,7 +654,8 @@
       },
       "linkedNotes": {
         "title": "Linked Note Settings",
-        "description": "Configure settings for creating local Obsidian notes linked to remote calendar events."
+        "description": "Configure settings for creating local Obsidian notes linked to remote calendar events.",
+        "learnMore": "Linked Notes Guide"
       }
     },
     "categorization": {
@@ -703,8 +714,6 @@
     },
     "changelog": {
       "title": "更新日志",
-      "whatsNew": "新功能",
-      "viewFull": "查看完整更新日志",
       "versionWithNumber": "版本 {{version}}",
       "whatsNewPageLink": "新功能页面",
       "changelogPageLink": "更新日志",
@@ -718,7 +727,9 @@
         "seeAllButton": "查看所有更新日志",
         "donationMessage": "FCR 是通过 AI 增强工程高速构建的。如果它为您提供了价值，请考虑每月捐助 25 美元，以帮助维持这种可持续的发展速度。",
         "donationButton": "透明度报告与捐赠"
-      }
+      },
+      "whatsNew": "What's New",
+      "viewFull": "View full changelog"
     },
     "utils": {
       "timelineDisabled": "时间线视图已禁用。将桌面默认视图重置为 \"Week\"。"
@@ -805,6 +816,24 @@
       "buyMeACoffee": "☕ 请我喝杯咖啡",
       "suggestFeature": "💡 建议新功能",
       "raiseIssue": "🐛 反馈问题"
+    },
+    "fcrReminder": {
+      "title": "FCR Reminder Companion",
+      "description": "Sync your upcoming calendar events with the persistent FCR Reminder background companion daemon to receive native system-level toast notifications even when Obsidian is completely closed.",
+      "learnMore": "FCR Reminder Guide",
+      "enable": {
+        "label": "Enable companion integration",
+        "description": "Synchronize upcoming event alarms to the background companion daemon."
+      },
+      "apiUrl": {
+        "label": "Companion server url",
+        "description": "The loopback address of the FCR Reminder daemon.",
+        "placeholder": "http://127.0.0.1:45677"
+      },
+      "offlineBanner": {
+        "title": "⚠️ Companion app offline",
+        "message": "FCR Reminder is not running. Please start the companion app to enable native, offline notifications."
+      }
     }
   },
   "modals": {

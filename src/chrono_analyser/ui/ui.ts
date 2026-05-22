@@ -3,6 +3,17 @@ import { showNotice } from '../../utils/showNotice';
 
 import { App, Modal, Setting, TFolder, SuggestModal } from 'obsidian';
 import { t } from '../../features/i18n/i18n';
+import { createDescWithDocs, DocsLink } from '../../ui/settings/docsLinks';
+
+const CHRONO_DOCS_PATHS = {
+  overview: 'user/chrono_analyser/introduction',
+  settings: 'user/chrono_analyser/settings',
+  ruleParameters: 'user/chrono_analyser/settings/#rule-parameters',
+  persona: 'user/chrono_analyser/settings/#persona',
+  matching: 'user/chrono_analyser/settings/#how-matching-works',
+  filters: 'user/chrono_analyser/settings/#filter-and-chart-controls',
+  faq: 'user/chrono_analyser/faq'
+} as const;
 
 // DATA STRUCTURES
 interface InsightRule {
@@ -45,6 +56,52 @@ interface LegacyInsightsConfig {
   version: number;
   lastUpdated: string;
   insightGroups: LegacyInsightGroups;
+}
+
+function getChronoConfigDocsLinks(): {
+  configurationGuide: DocsLink;
+  matchingRules: DocsLink;
+  faq: DocsLink;
+  personaGuide: DocsLink;
+  insightsGuide: DocsLink;
+  ruleParameters: DocsLink;
+  terminology: DocsLink;
+  filtersGuide: DocsLink;
+} {
+  return {
+    configurationGuide: {
+      text: t('chrono.ui.docs.configurationGuide'),
+      path: CHRONO_DOCS_PATHS.settings
+    },
+    matchingRules: {
+      text: t('chrono.ui.docs.matchingRules'),
+      path: CHRONO_DOCS_PATHS.matching
+    },
+    faq: {
+      text: t('chrono.ui.docs.faq'),
+      path: CHRONO_DOCS_PATHS.faq
+    },
+    personaGuide: {
+      text: t('chrono.ui.docs.personaGuide'),
+      path: CHRONO_DOCS_PATHS.persona
+    },
+    insightsGuide: {
+      text: t('chrono.ui.docs.insightsGuide'),
+      path: CHRONO_DOCS_PATHS.settings
+    },
+    ruleParameters: {
+      text: t('chrono.ui.docs.ruleParameters'),
+      path: CHRONO_DOCS_PATHS.ruleParameters
+    },
+    terminology: {
+      text: t('chrono.ui.docs.terminology'),
+      path: CHRONO_DOCS_PATHS.overview
+    },
+    filtersGuide: {
+      text: t('chrono.ui.docs.filtersGuide'),
+      path: CHRONO_DOCS_PATHS.filters
+    }
+  };
 }
 
 // --- Autocomplete Component Class ---
@@ -283,12 +340,18 @@ export class InsightConfigModal extends Modal {
 
   onOpen() {
     const { contentEl } = this;
+    const docsLinks = getChronoConfigDocsLinks();
     contentEl.empty();
     contentEl.addClass('chrono-analyser-modal');
     contentEl.createEl('h2', { text: t('chrono.ui.title') });
-    contentEl.createEl('p', {
-      text: t('chrono.ui.description')
-    });
+    const descriptionEl = contentEl.createEl('p');
+    descriptionEl.append(
+      createDescWithDocs(t('chrono.ui.description'), [
+        docsLinks.configurationGuide,
+        docsLinks.matchingRules,
+        docsLinks.faq
+      ])
+    );
 
     // --- INITIALIZE THE STABLE CONTAINER ---
     this.groupsContainerEl = contentEl.createDiv();
@@ -355,6 +418,7 @@ export class InsightConfigModal extends Modal {
 
   // --- REPLACE THE ENTIRE renderGroupSetting METHOD ---
   private renderGroupSetting(container: HTMLElement, groupName: string, groupData: InsightGroup) {
+    const docsLinks = getChronoConfigDocsLinks();
     const currentGroupName = groupName;
     const { rules, persona } = groupData;
     const isExpanded = this.expandedGroupName === currentGroupName;
@@ -443,7 +507,12 @@ export class InsightConfigModal extends Modal {
     // --- ADD Persona Dropdown ---
     new Setting(foldableContent)
       .setName(t('chrono.ui.persona.name'))
-      .setDesc(t('chrono.ui.persona.desc'))
+      .setDesc(
+        createDescWithDocs(t('chrono.ui.persona.desc'), [
+          docsLinks.personaGuide,
+          docsLinks.insightsGuide
+        ])
+      )
       .setDisabled(!isExpanded)
       .addDropdown(dd => {
         dd.addOption('productivity', t('chrono.ui.persona.productivity'))
@@ -462,7 +531,10 @@ export class InsightConfigModal extends Modal {
     this.createTagInput(
       foldableContent,
       t('chrono.ui.hierarchies.name'),
-      t('chrono.ui.hierarchies.desc'),
+      createDescWithDocs(t('chrono.ui.hierarchies.desc'), [
+        docsLinks.ruleParameters,
+        docsLinks.terminology
+      ]),
       t('chrono.ui.hierarchies.add'),
       rules.hierarchies || [],
       this.knownHierarchies,
@@ -471,7 +543,10 @@ export class InsightConfigModal extends Modal {
     this.createTagInput(
       foldableContent,
       t('chrono.ui.projects.name'),
-      t('chrono.ui.projects.desc'),
+      createDescWithDocs(t('chrono.ui.projects.desc'), [
+        docsLinks.ruleParameters,
+        docsLinks.matchingRules
+      ]),
       t('chrono.ui.projects.add'),
       rules.projects || [],
       this.knownProjects,
@@ -480,7 +555,10 @@ export class InsightConfigModal extends Modal {
     this.createTagInput(
       foldableContent,
       t('chrono.ui.mutedProjects.name'),
-      t('chrono.ui.mutedProjects.desc'),
+      createDescWithDocs(t('chrono.ui.mutedProjects.desc'), [
+        docsLinks.matchingRules,
+        docsLinks.faq
+      ]),
       t('chrono.ui.mutedProjects.add'),
       rules.mutedProjects || [],
       this.knownProjects,
@@ -489,7 +567,12 @@ export class InsightConfigModal extends Modal {
 
     new Setting(foldableContent)
       .setName(t('chrono.ui.subprojectKeywords.name'))
-      .setDesc(t('chrono.ui.subprojectKeywords.desc'))
+      .setDesc(
+        createDescWithDocs(t('chrono.ui.subprojectKeywords.desc'), [
+          docsLinks.matchingRules,
+          docsLinks.filtersGuide
+        ])
+      )
       .addTextArea(text => {
         text
           .setValue((rules.subprojectKeywords || []).join('\n'))
@@ -506,7 +589,12 @@ export class InsightConfigModal extends Modal {
 
     new Setting(foldableContent)
       .setName(t('chrono.ui.mutedSubprojectKeywords.name'))
-      .setDesc(t('chrono.ui.mutedSubprojectKeywords.desc'))
+      .setDesc(
+        createDescWithDocs(t('chrono.ui.mutedSubprojectKeywords.desc'), [
+          docsLinks.matchingRules,
+          docsLinks.faq
+        ])
+      )
       .addTextArea(text => {
         text
           .setValue((rules.mutedSubprojectKeywords || []).join('\n'))
@@ -525,7 +613,7 @@ export class InsightConfigModal extends Modal {
   private createTagInput(
     container: HTMLElement,
     name: string,
-    desc: string,
+    desc: string | DocumentFragment,
     placeholder: string,
     values: string[],
     suggestions: string[],

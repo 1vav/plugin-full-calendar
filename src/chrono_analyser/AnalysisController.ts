@@ -51,7 +51,7 @@ export class AnalysisController {
       },
       () => this.openInsightsConfigModal(),
       () => {
-        void this.disableDemoForSession();
+        this.openInsightsConfigModal();
       }
     );
 
@@ -121,10 +121,8 @@ export class AnalysisController {
   }
 
   private shouldOpenDemoMode(): boolean {
-    return (
-      !this.demoModeDisabledForSession &&
-      !DemoDataService.hasConfiguredInsights(PluginState.getSettings().chrono_analyser_config)
-    );
+    // Only show demo mode if user has not configured insights
+    return !DemoDataService.hasConfiguredInsights(PluginState.getSettings().chrono_analyser_config);
   }
 
   private async initializeDemoData(): Promise<void> {
@@ -170,6 +168,7 @@ export class AnalysisController {
     }
   }
 
+  // disableDemoForSession is no longer used for demo toggle, but keep for completeness if needed elsewhere
   private async disableDemoForSession(): Promise<void> {
     this.demoModeDisabledForSession = true;
     this.demoModeActive = false;

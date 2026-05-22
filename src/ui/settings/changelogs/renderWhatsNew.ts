@@ -11,7 +11,9 @@ import './changelog.css';
 import { t } from '../../../features/i18n/i18n';
 import FullCalendarPlugin from '../../../main';
 import { WhatsNewModal } from '../../modals/WhatsNewModal';
-import { createMarkdownLinksFragment } from '../linkTextFragments';
+import * as ReactDOM from 'react-dom/client';
+import { createElement } from 'react';
+import { VersionSection } from './Changelog';
 
 /**
  * Checks if the plugin version has changed and displays the "What's New" modal if necessary.
@@ -27,7 +29,6 @@ export function checkAndShowWhatsNew(plugin: FullCalendarPlugin): void {
       PluginState.getSettings().currentVersion !== releaseVersion
     ) {
       new WhatsNewModal(plugin.app, plugin).open();
-
       const { refreshRemoteAssetsForVersionUpdate } =
         await import('../../../features/remoteAssets/versionedAssetRefresh');
       await refreshRemoteAssetsForVersionUpdate(plugin.app, plugin.manifest.id);
@@ -58,23 +59,12 @@ export function renderWhatsNew(containerEl: HTMLElement, onShowChangelog: () => 
   whatsNewContainer.createEl('hr', { cls: 'settings-view-new-divider' });
 
   const whatsNewList = whatsNewContainer.createDiv('full-calendar-whats-new-list');
-  latestVersion.changes.forEach(change => {
-    const item = new Setting(whatsNewList)
-      .setName(change.title)
-      .setDesc(createMarkdownLinksFragment(change.description));
-
-    const iconEl = containerEl.ownerDocument.createElement('span');
-    iconEl.className = `change-icon-settings change-type-${change.type}`;
-    if (change.type === 'new') {
-      iconEl.textContent = '+';
-    } else if (change.type === 'improvement') {
-      iconEl.textContent = '🔧';
-    } else if (change.type === 'fix') {
-      iconEl.textContent = '🐛';
-    }
-
-    item.nameEl.prepend(iconEl);
-    item.settingEl.addClass('full-calendar-whats-new-item');
-    item.controlEl.empty();
-  });
+  const root = ReactDOM.createRoot(whatsNewList);
+  root.render(
+    createElement(VersionSection, {
+      version: latestVersion,
+      isInitiallyOpen: true,
+      embedded: true
+    })
+  );
 }

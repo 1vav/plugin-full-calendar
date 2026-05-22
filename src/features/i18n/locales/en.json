@@ -52,6 +52,16 @@
         "discard": "Discard Changes"
       },
       "folderSelectPlaceholder": "Select a folder with your time tracking files...",
+      "docs": {
+        "configurationGuide": "Configuration guide",
+        "matchingRules": "Matching rules",
+        "faq": "FAQ",
+        "personaGuide": "Persona guide",
+        "insightsGuide": "Insight reference",
+        "ruleParameters": "Rule parameters",
+        "terminology": "Terminology",
+        "filtersGuide": "Filter syntax"
+      },
       "errors": {
         "groupExists": "Group name \"{{name}}\" already exists."
       }
@@ -536,7 +546,8 @@
       "addCalendarTooltip": "Add Calendar",
       "linkedNotes": {
         "title": "Linked Note Settings",
-        "description": "Configure settings for creating local Obsidian notes linked to remote calendar events."
+        "description": "Configure settings for creating local Obsidian notes linked to remote calendar events.",
+        "learnMore": "Linked Notes Guide"
       },
       "defaults": {
         "iCloud": "iCloud Calendar",
@@ -707,8 +718,6 @@
     },
     "changelog": {
       "title": "Changelog",
-      "whatsNew": "What's new",
-      "viewFull": "View full changelog",
       "versionWithNumber": "Version {{version}}",
       "modal": {
         "title": "What's New in FCR",
@@ -716,6 +725,8 @@
         "donationMessage": "FCR is built at high velocity with AI-augmented engineering. If this has provided value to you, consider contributing to $25/month subsidy to help keep this pace sustainable.",
         "donationButton": "Transparency Report & Donation"
       },
+      "whatsNew": "What's New",
+      "viewFull": "View full changelog",
       "whatsNewPageLink": "What's New page",
       "changelogPageLink": "Changelog",
       "loadOlder": {
@@ -802,6 +813,24 @@
           "search": "Search + Create (selector modal)",
           "create": "Direct Create (task creation modal NLP)"
         }
+      }
+    },
+    "fcrReminder": {
+      "title": "FCR Reminder Companion",
+      "description": "Sync your upcoming calendar events with the persistent FCR Reminder background companion daemon to receive native system-level toast notifications even when Obsidian is completely closed.",
+      "learnMore": "FCR Reminder Guide",
+      "enable": {
+        "label": "Enable companion integration",
+        "description": "Synchronize upcoming event alarms to the background companion daemon."
+      },
+      "apiUrl": {
+        "label": "Companion server url",
+        "description": "The loopback address of the FCR Reminder daemon.",
+        "placeholder": "http://127.0.0.1:45677"
+      },
+      "offlineBanner": {
+        "title": "⚠️ Companion app offline",
+        "message": "FCR Reminder is not running. Please start the companion app to enable native, offline notifications."
       }
     },
     "footer": {

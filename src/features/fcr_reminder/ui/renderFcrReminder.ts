@@ -1,6 +1,8 @@
 import { PluginState } from '../../../core/PluginState';
 import { Setting } from 'obsidian';
 import FullCalendarPlugin from '../../../main';
+import { t } from '../../../features/i18n/i18n';
+import { createDescWithDocs } from '../../../ui/settings/docsLinks';
 
 export function renderFcrReminderSettings(
   containerEl: HTMLElement,
@@ -9,10 +11,12 @@ export function renderFcrReminderSettings(
 ): void {
   // 1. Integrations Header
   new Setting(containerEl)
-    .setName('Fcr reminder companion')
+    .setName(t('settings.fcrReminder.title'))
     .setHeading()
     .setDesc(
-      'Sync your upcoming calendar events with the persistent fcr reminder background companion daemon to receive native system-level toast notifications even when Obsidian is completely closed.'
+      createDescWithDocs(t('settings.fcrReminder.description'), [
+        { text: t('settings.fcrReminder.learnMore'), path: 'user/features/fcr-reminder' }
+      ])
     );
 
   const manager = plugin.fcrReminderManager;
@@ -22,8 +26,8 @@ export function renderFcrReminderSettings(
 
   // 2. Enable/Disable Toggle
   new Setting(containerEl)
-    .setName('Enable companion integration')
-    .setDesc('Synchronize upcoming event alarms to the background companion daemon.')
+    .setName(t('settings.fcrReminder.enable.label'))
+    .setDesc(t('settings.fcrReminder.enable.description'))
     .addToggle(toggle => {
       toggle.setValue(companionSettings.enabled);
       toggle.onChange(async val => {
@@ -37,12 +41,12 @@ export function renderFcrReminderSettings(
   if (companionSettings.enabled) {
     // 3.1. API Server URL
     new Setting(containerEl)
-      .setName('Companion server url')
-      .setDesc('The loopback address of the fcr reminder daemon.')
+      .setName(t('settings.fcrReminder.apiUrl.label'))
+      .setDesc(t('settings.fcrReminder.apiUrl.description'))
       .addText(text => {
         text.inputEl.type = 'text';
-        text.setPlaceholder('Http://127.0.0.1:45677');
-        text.setValue(companionSettings.apiUrl || 'http://127.0.0.1:45677');
+        text.setPlaceholder(t('settings.fcrReminder.apiUrl.placeholder'));
+        text.setValue(companionSettings.apiUrl || t('settings.fcrReminder.apiUrl.placeholder'));
         text.onChange(async val => {
           companionSettings.apiUrl = val.trim();
           await PluginState.saveSettings();
@@ -64,14 +68,16 @@ export function renderFcrReminderSettings(
       display: 'none'
     });
 
-    const titleSpan = bannerEl.createEl('strong', { text: '⚠️ companion app offline\n' });
+    const titleSpan = bannerEl.createEl('strong', {
+      text: t('settings.fcrReminder.offlineBanner.title')
+    });
     titleSpan.setCssProps({
       display: 'block',
       marginBottom: '4px'
     });
 
     bannerEl.createSpan({
-      text: 'FCR reminder is not running. Please start the companion app to enable native, off-line notifications.'
+      text: t('settings.fcrReminder.offlineBanner.message')
     });
 
     // 3.3. Asynchronous Status Verification Check

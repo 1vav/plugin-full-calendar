@@ -82,7 +82,7 @@ const getHeadingPosition = (
 
 const serializeInlineAttributeValue = (value: unknown): string => {
   if (typeof value === 'object' && value !== null && 'value' in value) {
-    const nestedValue = (value as { value: unknown }).value;
+    const nestedValue = (value as Record<string, unknown>)['value'];
     if (
       typeof nestedValue === 'string' ||
       typeof nestedValue === 'number' ||

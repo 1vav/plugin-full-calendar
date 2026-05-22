@@ -4,6 +4,19 @@ This page highlights the latest **major features and improvements** to help you 
 For a detailed version-by-version breakdown, see the [Changelog](changelog.md).
 
 
+## 🔗 Event Linked Notes
+
+You can now link unique, template-driven Obsidian notes to your calendar events! This fully reactive system automatically manages association metadata and works seamlessly across both local and remote calendars (Google Calendar, CalDAV, ICS, Outlook).
+
+*   **Reactive Metadata Mapping**: Uses `fc-event-uid` and `fc-calendar-id` frontmatter keys to automatically and dynamically index note-to-event relationships in an in-memory catalog.
+*   **Template-Driven Body Creation**: Utilize a robust `TemplateEngine` to design custom, context-aware event note bodies and layouts.
+*   **Seamless Interoperability**: Create, manage, and open linked notes for Google, CalDAV, ICS, and Outlook events with inline editor and event modal shortcuts.
+*   **Settings Controls**: Easily configure directory targets and template files per calendar source.
+
+➡️ Learn more about **[Event Linked Notes Guide](user/features/event-linked-notes.md)** and the **[Event Linked Notes Technical Architecture](architecture/system/features/event-linked-notes.md)**.
+
+---
+
 ## 🚀 NLP & Milestones System
 
 Full Calendar now features an advanced Natural Language Processing (NLP) engine for smarter event parsing, along with a brand new Milestones system to track and reward your productivity achievements. We've also deeply integrated TaskNotes to keep your workflows seamless.

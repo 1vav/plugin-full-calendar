@@ -50,6 +50,16 @@
       "folderSelectPlaceholder": "Wählen Sie einen Ordner mit Ihren Zeiterfassungsdateien...",
       "errors": {
         "groupExists": "Gruppenname \"{{name}}\" existiert bereits."
+      },
+      "docs": {
+        "configurationGuide": "Configuration guide",
+        "matchingRules": "Matching rules",
+        "faq": "FAQ",
+        "personaGuide": "Persona guide",
+        "insightsGuide": "Insight reference",
+        "ruleParameters": "Rule parameters",
+        "terminology": "Terminology",
+        "filtersGuide": "Filter syntax"
       }
     },
     "analyser": {
@@ -644,7 +654,8 @@
       },
       "linkedNotes": {
         "title": "Linked Note Settings",
-        "description": "Configure settings for creating local Obsidian notes linked to remote calendar events."
+        "description": "Configure settings for creating local Obsidian notes linked to remote calendar events.",
+        "learnMore": "Linked Notes Guide"
       }
     },
     "categorization": {
@@ -703,8 +714,6 @@
     },
     "changelog": {
       "title": "Änderungsprotokoll",
-      "whatsNew": "Was ist neu",
-      "viewFull": "Vollständiges Änderungsprotokoll anzeigen",
       "versionWithNumber": "Version {{version}}",
       "whatsNewPageLink": "Was ist neu-Seite",
       "changelogPageLink": "Änderungsprotokoll",
@@ -718,7 +727,9 @@
         "seeAllButton": "Alle Änderungsprotokolle anzeigen",
         "donationMessage": "FCR wird mit hoher Geschwindigkeit durch KI-gestützte Entwicklung erstellt. Wenn Ihnen dies einen Mehrwert bietet, erwägen Sie bitte einen Beitrag von 25 $/Monat, um dieses Tempo nachhaltig zu unterstützen.",
         "donationButton": "Transparenzbericht & Spende"
-      }
+      },
+      "whatsNew": "What's New",
+      "viewFull": "View full changelog"
     },
     "utils": {
       "timelineDisabled": "Timeline-Ansicht ist deaktiviert. Standard-Desktop-Ansicht wird auf \"Woche\" zurückgesetzt."
@@ -804,6 +815,24 @@
           "search": "Suchen + Erstellen (Auswahl-Modal)",
           "create": "Direktes Erstellen (Aufgabenerstellungs-Modal NLP)"
         }
+      }
+    },
+    "fcrReminder": {
+      "title": "FCR Reminder Companion",
+      "description": "Sync your upcoming calendar events with the persistent FCR Reminder background companion daemon to receive native system-level toast notifications even when Obsidian is completely closed.",
+      "learnMore": "FCR Reminder Guide",
+      "enable": {
+        "label": "Enable companion integration",
+        "description": "Synchronize upcoming event alarms to the background companion daemon."
+      },
+      "apiUrl": {
+        "label": "Companion server url",
+        "description": "The loopback address of the FCR Reminder daemon.",
+        "placeholder": "http://127.0.0.1:45677"
+      },
+      "offlineBanner": {
+        "title": "⚠️ Companion app offline",
+        "message": "FCR Reminder is not running. Please start the companion app to enable native, offline notifications."
       }
     }
   },
