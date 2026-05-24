@@ -9,7 +9,6 @@ import type {
 } from '../../providers/Provider';
 import { t } from '../../features/i18n/i18n';
 import { dateEndpointsToFrontmatter, fromEventApi } from '../../core/interop';
-import { TasksBacklogView, TASKS_BACKLOG_VIEW_TYPE } from '../../providers/tasks/TasksBacklogView';
 import { ViewContext } from './ViewContext';
 
 export class ViewEventInteractionHandler {
@@ -254,7 +253,7 @@ export class ViewEventInteractionHandler {
     }
   }
 
-  public async handleDrop(taskId: string, date: Date): Promise<void> {
+  public async handleDrop(taskId: string, date: Date, allDay: boolean): Promise<void> {
     try {
       if (!PluginState.getCache()) {
         throw new Error('Event cache not available');
@@ -266,16 +265,10 @@ export class ViewEventInteractionHandler {
         return;
       }
 
-      await PluginState.getCache().scheduleTask(taskId, date);
+      await PluginState.getCache().scheduleTask(taskId, date, allDay);
       showNotice(t('ui.view.success.taskScheduled'));
 
-      const backlogLeaves = this.ctx.app.workspace.getLeavesOfType(TASKS_BACKLOG_VIEW_TYPE);
-      for (const leaf of backlogLeaves) {
-        if (leaf.view instanceof TasksBacklogView) {
-          void leaf.view.refresh();
-        }
-      }
-
+      PluginState.getProviderRegistry().refreshBacklogViews();
       void this.ctx.refreshView();
     } catch (error) {
       console.error('Failed to schedule task:', error);

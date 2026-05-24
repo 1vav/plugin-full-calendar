@@ -6,13 +6,14 @@ import {
   CalendarProviderCapabilities,
   SyncKeyProvider,
   CanonicalTitleProvider,
-  ProviderLoadRetryPolicy
+  ProviderLoadRetryPolicy,
+  TaskBacklogProvider
 } from '../providers/Provider';
 import { CalendarInfo, EventLocation, OFCEvent } from '../types';
 import EventCache from '../core/EventCache';
 import FullCalendarPlugin from '../main';
 import { ObsidianIO, ObsidianInterface } from '../ObsidianAdapter';
-import { TasksBacklogManager } from './tasks/TasksBacklogManager';
+import { TaskBacklogManager } from '../features/task-backlogs/TaskBacklogManager';
 import { t } from '../features/i18n/i18n';
 
 const SECOND = 1000;
@@ -33,13 +34,20 @@ type ProviderLoader = () => Promise<Record<string, unknown>>;
 
 export class ProviderRegistry {
   /**
-   * Triggers a refresh of any open Tasks Backlog views.
-   * This is called by the Tasks provider when its internal data changes.
+   * Triggers a refresh of any open task backlog views.
+   * This is called by providers when their backlog data changes.
    */
   public refreshBacklogViews(): void {
-    if (this.tasksBacklogManager.getIsLoaded()) {
-      this.tasksBacklogManager.refreshViews();
+    if (this.taskBacklogManager.getIsLoaded()) {
+      this.taskBacklogManager.refreshViews();
     }
+  }
+
+  /**
+   * Compatibility shim for the original CalDAV task inbox code path.
+   */
+  public refreshCalDAVTaskInboxViews(): void {
+    this.refreshBacklogViews();
   }
   private providers = new Map<string, ProviderLoader>();
   private instances = new Map<string, CalendarProvider<unknown>>();
@@ -55,8 +63,8 @@ export class ProviderRegistry {
   private sessionIdToIdentifierMap: Map<string, string> = new Map();
   private identifierMapPromise: Promise<void> | null = null;
 
-  // Tasks backlog manager for lifecycle management
-  private tasksBacklogManager: TasksBacklogManager;
+  // Task backlog manager for lifecycle management
+  private taskBacklogManager: TaskBacklogManager;
 
   private normalizePersistentId(id: string): string {
     return id.replace(/\\/g, '/');
@@ -116,7 +124,7 @@ export class ProviderRegistry {
 
   constructor(plugin: FullCalendarPlugin) {
     this.plugin = plugin;
-    this.tasksBacklogManager = new TasksBacklogManager(plugin);
+    this.taskBacklogManager = new TaskBacklogManager(plugin);
     // initializeInstances is now called from main.ts after settings are loaded.
   }
 
@@ -547,6 +555,7 @@ export class ProviderRegistry {
           // Immediately kick off Stage 2 for THIS provider instead of waiting for all Stage 1.
           const rawEventsStage2 = await instance.getEvents();
           processResults(settingsId, rawEventsStage2);
+          await this.refreshProviderAuxiliaryData(settingsId, instance);
         } catch (e) {
           const source = this.getSource(settingsId);
           console.warn(`Full Calendar: Failed to load remote calendar source pipeline`, source, e);
@@ -561,6 +570,31 @@ export class ProviderRegistry {
 
   private getRetryPolicy(instance: CalendarProvider<unknown>): ProviderLoadRetryPolicy | null {
     return instance.getLoadRetryPolicy?.() ?? null;
+  }
+
+  private async refreshProviderAuxiliaryData(
+    settingsId: string,
+    instance: CalendarProvider<unknown>
+  ): Promise<void> {
+    const auxiliaryProvider = instance as unknown as {
+      refreshTaskBacklogItems?: () => Promise<unknown>;
+      refreshUndatedTasks?: () => Promise<unknown>;
+    };
+
+    const refresh =
+      auxiliaryProvider.refreshTaskBacklogItems ?? auxiliaryProvider.refreshUndatedTasks;
+
+    if (typeof refresh !== 'function') {
+      return;
+    }
+
+    try {
+      await refresh.call(auxiliaryProvider);
+      this.refreshBacklogViews();
+    } catch (e) {
+      const source = this.getSource(settingsId);
+      console.warn('Full Calendar: Failed to refresh provider auxiliary data', source, e);
+    }
   }
 
   private scheduleProviderReload(
@@ -605,8 +639,10 @@ export class ProviderRegistry {
     try {
       const rawEvents = await instance.getEvents();
       this.cache.syncCalendar(settingsId, rawEvents);
+      await this.refreshProviderAuxiliaryData(settingsId, instance);
       this.providerRetryAttempts.delete(settingsId);
       this.refreshBacklogViews();
+      this.refreshCalDAVTaskInboxViews();
     } catch (e) {
       const source = this.getSource(settingsId);
       console.warn(`Full Calendar: Delayed provider reload failed`, source, e);
@@ -762,20 +798,19 @@ export class ProviderRegistry {
     showNotice(t('notices.revalidatingRemotes'));
 
     const promises = remoteInstances.map(([settingsId, instance]) => {
-      return instance
-        .getEvents()
-        .then(events => {
+      return Promise.all([
+        instance.getEvents().then(events => {
           if (!this.cache) {
             return;
           }
           this.cache.syncCalendar(settingsId, events);
-        })
-        .catch((err: Error) => {
-          const source = this.getSource(settingsId);
-          const name =
-            source && 'name' in source ? (source as { name: string }).name : instance.type;
-          throw new Error(`Failed to revalidate calendar "${name}": ${err.message}`);
-        });
+        }),
+        this.refreshProviderAuxiliaryData(settingsId, instance)
+      ]).catch((err: Error) => {
+        const source = this.getSource(settingsId);
+        const name = source && 'name' in source ? (source as { name: string }).name : instance.type;
+        throw new Error(`Failed to revalidate calendar "${name}": ${err.message}`);
+      });
     });
 
     void Promise.allSettled(promises).then(results => {
@@ -837,28 +872,22 @@ export class ProviderRegistry {
       // Note: resync is now triggered automatically by populate's onAllComplete callback
       // when all async providers finish loading, so we don't need to call it here
 
-      // Refresh backlog views if they exist
-      if (this.tasksBacklogManager.getIsLoaded()) {
-        this.tasksBacklogManager.refreshViews();
-      }
+      this.refreshBacklogViews();
     })();
   };
 
   /**
-   * Synchronizes the Tasks Backlog Manager lifecycle based on provider availability.
+   * Synchronizes the Task Backlog Manager lifecycle based on provider availability.
    * This method centralizes the logic for loading/unloading the backlog based on
-   * whether any Tasks providers are currently configured.
+   * whether any configured provider exposes the task backlog contract.
    */
   public syncBacklogManagerLifecycle(): void {
-    // Manage Tasks Backlog view lifecycle based on provider availability
-    if (this.hasProviderOfType('tasks')) {
-      if (!this.tasksBacklogManager.getIsLoaded()) {
-        this.tasksBacklogManager.onload();
+    if (this.getTaskBacklogProviders().length > 0) {
+      if (!this.taskBacklogManager.getIsLoaded()) {
+        this.taskBacklogManager.onload();
       }
-    } else {
-      if (this.tasksBacklogManager.getIsLoaded()) {
-        this.tasksBacklogManager.onunload();
-      }
+    } else if (this.taskBacklogManager.getIsLoaded()) {
+      this.taskBacklogManager.onunload();
     }
   }
 
@@ -960,6 +989,18 @@ export class ProviderRegistry {
 
   public getActiveProviders(): CalendarProvider<unknown>[] {
     return Array.from(this.instances.values());
+  }
+
+  public getTaskBacklogProviders(): (CalendarProvider<unknown> & TaskBacklogProvider)[] {
+    return this.getActiveProviders().filter(
+      (provider): provider is CalendarProvider<unknown> & TaskBacklogProvider => {
+        const maybeProvider = provider as Partial<TaskBacklogProvider>;
+        return (
+          typeof maybeProvider.getTaskBacklogInfo === 'function' &&
+          typeof maybeProvider.getTaskBacklogItems === 'function'
+        );
+      }
+    );
   }
 
   public hasProviderOfType(type: string): boolean {
