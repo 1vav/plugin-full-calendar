@@ -59,6 +59,18 @@ Examples:
 - `projA/roadmap` matches by path fragment.
 - `wkpln` can match `weekly-plan` via fuzzy subsequence matching.
 
+## Creating Unscheduled Tasks in the Backlog
+
+At the bottom of the backlog sidebar, the persistent fixed footer allows you to queue **unscheduled (undated)** tasks immediately.
+
+| Action | Target Location | Date/Time State | Primary Use Case |
+|---|---|---|---|
+| **Backlog Creation** | Sidebar Footer | **None** (Undated) | Quick brainstorming or queuing a task to drag-and-schedule later. |
+| **[Grid Creation](../events/index.md)** | Calendar Grid | **Active** (Dated) | Blocking a specific date/time slot on your calendar immediately. |
+
+!!! note "Workflow"
+    Creating a task in the backlog footer generates a raw, undated item within your source provider (e.g. [Tasks Plugin](tasks-plugin-integration.md) or [CalDAV](caldav.md)). Drag it from the sidebar onto the grid to [surgical block time](../guides/commands-and-shortcuts.md) instantly.
+
 ---
 
 ## Data Mapping & Emojis

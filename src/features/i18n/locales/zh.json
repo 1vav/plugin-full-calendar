@@ -834,6 +834,15 @@
         "title": "⚠️ Companion app offline",
         "message": "FCR Reminder is not running. Please start the companion app to enable native, offline notifications."
       }
+    },
+    "taskBacklog": {
+      "addUnscheduledTask": "Add unscheduled task",
+      "sourceLabel": "Task backlog source",
+      "placeholder": "Task title...",
+      "newTitleLabel": "New task name",
+      "addBtnLabel": "Add task",
+      "helpText": "Creates a task on your remote server. ",
+      "learnMore": "Learn more"
     }
   },
   "modals": {

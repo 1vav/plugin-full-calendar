@@ -902,7 +902,34 @@ export class TasksPluginProvider
     }
   }
 
-  public async scheduleTask(taskId: string, date: Date): Promise<void> {
+  public ownsTaskId(taskId: string): boolean {
+    const parts = taskId.split('::');
+    return parts.length === 2 && !taskId.startsWith('caldav::');
+  }
+
+  public async validateTaskSchedule(
+    taskId: string,
+    date: Date
+  ): Promise<{ isValid: boolean; reason?: string }> {
+    const task = this.allTasks.find(t => t.id === taskId);
+    if (!task) {
+      return { isValid: true };
+    }
+    return this.canBeScheduledAt(
+      {
+        uid: taskId,
+        title: '',
+        type: 'single',
+        allDay: true,
+        date: '',
+        endDate: null,
+        completed: false
+      },
+      date
+    );
+  }
+
+  public async scheduleTask(taskId: string, date: Date, _allDay = true): Promise<void> {
     const task = this.allTasks.find(t => t.id === taskId);
     if (!task) {
       throw new Error(`Cannot find original task to schedule at ${taskId}`);

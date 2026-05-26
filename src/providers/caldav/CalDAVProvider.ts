@@ -101,6 +101,26 @@ export type CalDAVTaskInboxItem = {
   etag?: string;
 };
 
+export function encodeCalDAVTaskId(calendarId: string, uid: string): string {
+  return `caldav::${encodeURIComponent(calendarId)}::${encodeURIComponent(uid)}`;
+}
+
+export function parseCalDAVTaskId(taskId: string): { calendarId: string; uid: string } | null {
+  const parts = taskId.split('::');
+  if (parts.length !== 3 || parts[0] !== 'caldav') {
+    return null;
+  }
+
+  try {
+    return {
+      calendarId: decodeURIComponent(parts[1]),
+      uid: decodeURIComponent(parts[2])
+    };
+  } catch {
+    return null;
+  }
+}
+
 function shouldUseCompatibilityFetch(status: number): boolean {
   return status === 400 || status === 422;
 }
@@ -901,7 +921,7 @@ export class CalDAVProvider
   }
 
   async openTaskBacklogItem(taskId: string): Promise<void> {
-    const parsed = this.parseTaskBacklogId(taskId);
+    const parsed = parseCalDAVTaskId(taskId);
     if (!parsed || parsed.calendarId !== this.source.id) {
       return;
     }
@@ -922,32 +942,12 @@ export class CalDAVProvider
 
   private toTaskBacklogItem(task: CalDAVTaskInboxItem): TaskBacklogItem {
     return {
-      id: this.encodeTaskBacklogId(task.calendarId, task.uid),
+      id: encodeCalDAVTaskId(task.calendarId, task.uid),
       title: task.title,
       completed: task.completed,
       subtitle: task.calendarName,
       sourceId: task.calendarId
     };
-  }
-
-  private encodeTaskBacklogId(calendarId: string, uid: string): string {
-    return `caldav::${encodeURIComponent(calendarId)}::${encodeURIComponent(uid)}`;
-  }
-
-  private parseTaskBacklogId(taskId: string): { calendarId: string; uid: string } | null {
-    const parts = taskId.split('::');
-    if (parts.length !== 3 || parts[0] !== 'caldav') {
-      return null;
-    }
-
-    try {
-      return {
-        calendarId: decodeURIComponent(parts[1]),
-        uid: decodeURIComponent(parts[2])
-      };
-    } catch {
-      return null;
-    }
   }
 
   async createTask(title: string): Promise<CalDAVTaskInboxItem> {
@@ -1057,7 +1057,51 @@ export class CalDAVProvider
     });
   }
 
-  async scheduleTask(taskUid: string, date: Date, allDay = true): Promise<void> {
+  public ownsTaskId(taskId: string): boolean {
+    const parsed = parseCalDAVTaskId(taskId);
+    return parsed !== null && parsed.calendarId === this.source.id;
+  }
+
+  async validateTaskSchedule(
+    taskId: string,
+    date: Date
+  ): Promise<{ isValid: boolean; reason?: string }> {
+    const parsed = parseCalDAVTaskId(taskId);
+    let taskUid = taskId;
+    if (parsed) {
+      if (parsed.calendarId !== this.source.id) {
+        return { isValid: false, reason: 'Task does not belong to this calendar source.' };
+      }
+      taskUid = parsed.uid;
+    }
+
+    const provider = this as CalendarProvider<CalDAVProviderConfig>;
+    if (provider.canBeScheduledAt && typeof provider.canBeScheduledAt === 'function') {
+      return provider.canBeScheduledAt(
+        {
+          uid: taskUid,
+          title: '',
+          type: 'single',
+          allDay: true,
+          date: '',
+          endDate: null,
+          completed: false
+        },
+        date
+      );
+    }
+    return { isValid: true };
+  }
+
+  async scheduleTask(taskId: string, date: Date, allDay = true): Promise<void> {
+    const parsed = parseCalDAVTaskId(taskId);
+    let taskUid = taskId;
+    if (parsed) {
+      if (parsed.calendarId !== this.source.id) {
+        throw new Error(`CalDAV task ID ${taskId} does not belong to this provider.`);
+      }
+      taskUid = parsed.uid;
+    }
     const authHeader = createBasicAuthHeader(this.source.username, this.source.password);
     const objects = await fetchCalendarObjectsViaPropfindFallback(this.source.homeUrl, authHeader);
 

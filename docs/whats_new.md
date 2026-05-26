@@ -4,6 +4,17 @@ This page highlights the latest **major features and improvements** to help you 
 For a detailed version-by-version breakdown, see the [Changelog](changelog.md).
 
 
+## 📋 Unified Task Backlog & CalDAV Tasks
+
+The task backlog has been completely reimagined as a **generalized, multi-source task backlog framework**! It is now fully decoupled from specific integrations, adhering to strict SOLID design principles, and aggregates unscheduled tasks from multiple sources in a single aggregated side panel.
+
+*   **CalDAV Tasks (VTODO)**: You can now fetch remote unscheduled `VTODO` tasks from your private iCloud, Fastmail, or self-hosted CalDAV servers directly into the Task Backlog sidebar.
+*   **Drag-and-Drop Scheduling**: Drag any remote CalDAV task or local Obsidian task from the backlog onto the calendar. The plugin automatically schedules the task (as all-day or timed) and syncs it back to your CalDAV server or local markdown files in real-time.
+*   **Task Creation**: Create new remote CalDAV tasks directly inside the backlog side panel, choosing your preferred destination account.
+*   **Event Linked Notes**: Clicking the note icon next to a backlog CalDAV task instantly generates and opens a local templates-driven markdown note, keeping your rich detail vault-local and your sync lightweight.
+
+---
+
 ## 🔗 Event Linked Notes
 
 You can now link unique, template-driven Obsidian notes to your calendar events! This fully reactive system automatically manages association metadata and works seamlessly across both local and remote calendars (Google Calendar, CalDAV, ICS, Outlook).

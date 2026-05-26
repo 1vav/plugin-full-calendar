@@ -56,3 +56,46 @@
   justify-content: center;
   padding: 0 8px;
 }
+
+/* Persistent Footer Layout Redesign */
+.tasks-backlog-view {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.tasks-backlog-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.tasks-backlog-footer {
+  flex-shrink: 0;
+  padding: 12px 10px 40px 10px;
+  border-top: 1px solid var(--background-modifier-border);
+  background-color: var(--background-secondary);
+}
+
+.tasks-backlog-footer-heading {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 0 0 10px 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tasks-backlog-footer .tasks-backlog-create-form {
+  margin-bottom: 0;
+}
+
+.tasks-backlog-footer-help {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  margin-top: 8px;
+  line-height: 1.35;
+}

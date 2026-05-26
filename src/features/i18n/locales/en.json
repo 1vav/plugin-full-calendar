@@ -759,6 +759,15 @@
         "enabledPrompt": "Activitywatch enabled. Please configure the target calendar by clicking the gear icon."
       }
     },
+    "taskBacklog": {
+      "addUnscheduledTask": "Add unscheduled task",
+      "sourceLabel": "Task backlog source",
+      "placeholder": "Task title...",
+      "newTitleLabel": "New task name",
+      "addBtnLabel": "Add task",
+      "helpText": "Creates a task on your remote server. ",
+      "learnMore": "Tasks Backlog Guide"
+    },
     "tasksIntegration": {
       "title": "Obsidian Tasks Integration",
       "description": "Configure how Full Calendar schedules tasks from the Tasks backlog.",

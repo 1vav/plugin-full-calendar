@@ -1003,6 +1003,13 @@ export class ProviderRegistry {
     );
   }
 
+  public getBacklogProviderForTask(
+    taskId: string
+  ): (CalendarProvider<unknown> & TaskBacklogProvider) | null {
+    const providers = this.getTaskBacklogProviders();
+    return providers.find(provider => provider.ownsTaskId(taskId)) ?? null;
+  }
+
   public hasProviderOfType(type: string): boolean {
     for (const instance of this.instances.values()) {
       if (instance.type === type) {

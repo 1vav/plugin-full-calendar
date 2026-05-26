@@ -35,6 +35,9 @@ export interface TaskBacklogProvider {
   createTaskBacklogItem?(title: string): Promise<TaskBacklogItem>;
   openTaskBacklogItem?(taskId: string): Promise<void>;
   refreshTaskBacklogItems?(): Promise<TaskBacklogItem[]>;
+  ownsTaskId(taskId: string): boolean;
+  scheduleTask(taskId: string, date: Date, allDay?: boolean): Promise<void>;
+  validateTaskSchedule?(taskId: string, date: Date): Promise<{ isValid: boolean; reason?: string }>;
 }
 
 export class RecoverableProviderLoadError extends Error {

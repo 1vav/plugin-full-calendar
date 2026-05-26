@@ -21,6 +21,17 @@ Calendars are automatically re-fetched from their source at most every five minu
 
 ---
 
+## CalDAV Task Backlog / Inbox
+
+CalDAV tasks (`VTODO` components) that do not have a scheduled or due date are parsed as **unscheduled backlog items**.
+
+- **Unified Backlog Sidebar**: Open the **Task Backlog** sidebar (via command palette or ribbon icon) to view unscheduled CalDAV tasks mixed alongside your Obsidian Tasks in a single, aggregated panel.
+- **Drag-and-Drop Scheduling**: You can drag any unscheduled CalDAV task from the sidebar backlog directly onto a date or time slot on the calendar. Full Calendar will automatically schedule it (as an all-day or timed task) and sync the updated dates back to your CalDAV server in real-time.
+- **Task Creation**: Create new unscheduled CalDAV tasks directly in the backlog sidebar by choosing your CalDAV calendar from the creation source dropdown.
+- **Linked Notes**: Clicking the note icon next to a CalDAV task in the backlog will automatically generate and open a local linked markdown note in Obsidian using your configured templates, allowing you to attach rich local notes and details to remote tasks.
+
+---
+
 ## Apple Calendar
 
 In order to use your [iCloud Calendar](https://www.icloud.com/calendar), you'll first need to create an [app-specific password](https://support.apple.com/en-us/HT204397). Armed with that info and the calendar specific url (given below), you can now add your private Apple Calendars.

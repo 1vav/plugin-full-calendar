@@ -10,6 +10,7 @@ import {
 } from '../../providers/Provider';
 import { TasksBacklogDateTarget } from '../../types/settings';
 import { t } from '../i18n/i18n';
+import { createDocsLinksFragment } from '../../ui/settings/docsLinks';
 import './task-backlog.css';
 
 export const TASK_BACKLOG_VIEW_TYPE = 'task-backlog-view';
@@ -108,7 +109,9 @@ export class TaskBacklogView extends ItemView {
 
   private ensureSelectedProvider(providers = this.getBacklogProviders()): void {
     const createProviders = providers.filter(
-      provider => provider.getTaskBacklogInfo().supportsCreate && provider.createTaskBacklogItem
+      provider =>
+        provider.getTaskBacklogInfo().supportsCreate &&
+        typeof provider.createTaskBacklogItem === 'function'
     );
     const settings = PluginState.getSettings();
     const persistedProviderId =
@@ -166,6 +169,12 @@ export class TaskBacklogView extends ItemView {
       const providerName = task.providerInfo.name.toLowerCase();
       const haystacks = [title, subtitle, providerName];
 
+      // Extract the last path segment (file name or task source base name) to preserve legacy filename-only search behavior
+      const baseName = subtitle.split(/[/\\]/).pop()?.split(':')[0]?.trim() || '';
+      if (baseName && baseName !== subtitle) {
+        haystacks.push(baseName);
+      }
+
       return tokens.every(token =>
         haystacks.some(
           haystack => haystack.includes(token) || this.isFuzzySubsequence(token, haystack)
@@ -195,12 +204,16 @@ export class TaskBacklogView extends ItemView {
     container.addClass('tasks-backlog-view');
 
     const providers = this.getBacklogProviders();
+
+    // Create scrollable content container
+    const contentContainer = container.createDiv({ cls: 'tasks-backlog-content' });
+
     if (providers.length === 0) {
-      this.renderNoProviders(container);
+      this.renderNoProviders(contentContainer);
       return;
     }
 
-    const header = container.createDiv({ cls: 'tasks-backlog-header' });
+    const header = contentContainer.createDiv({ cls: 'tasks-backlog-header' });
     const headerTitleRow = header.createDiv({ cls: 'tasks-backlog-title-row' });
     headerTitleRow.createEl('h3', { text: 'Task backlog' });
     if (providers.some(provider => provider.type === 'tasks')) {
@@ -216,14 +229,15 @@ export class TaskBacklogView extends ItemView {
       cls: 'tasks-backlog-count'
     });
 
-    this.renderCreateTaskForm(container, providers);
-
     if (this.displayedTasks.length === 0) {
-      this.renderEmptyState(container);
+      this.renderEmptyState(contentContainer);
     } else {
-      this.renderTasksList(container);
-      this.renderPaginationControls(container);
+      this.renderTasksList(contentContainer);
+      this.renderPaginationControls(contentContainer);
     }
+
+    // Render persistent footer at the bottom if any provider supports creation
+    this.renderFooterIfNeeded(container, providers);
 
     this.restoreSearchFocusIfNeeded();
   }
@@ -239,12 +253,14 @@ export class TaskBacklogView extends ItemView {
     });
   }
 
-  private renderCreateTaskForm(
+  private renderFooterIfNeeded(
     container: HTMLElement,
     providers = this.getBacklogProviders()
   ): void {
     const createProviders = providers.filter(
-      provider => provider.getTaskBacklogInfo().supportsCreate && provider.createTaskBacklogItem
+      provider =>
+        provider.getTaskBacklogInfo().supportsCreate &&
+        typeof provider.createTaskBacklogItem === 'function'
     );
     if (createProviders.length === 0) {
       return;
@@ -252,7 +268,15 @@ export class TaskBacklogView extends ItemView {
 
     this.ensureSelectedProvider(providers);
 
-    const form = container.createEl('form', { cls: 'tasks-backlog-create-form' });
+    const footer = container.createDiv({ cls: 'tasks-backlog-footer' });
+
+    // Heading
+    footer.createEl('h4', {
+      text: t('settings.taskBacklog.addUnscheduledTask'),
+      cls: 'tasks-backlog-footer-heading'
+    });
+
+    const form = footer.createEl('form', { cls: 'tasks-backlog-create-form' });
     form.addEventListener('submit', event => {
       event.preventDefault();
       void this.createTask();
@@ -261,7 +285,7 @@ export class TaskBacklogView extends ItemView {
     const select = form.createEl('select', {
       cls: 'tasks-backlog-create-source',
       attr: {
-        'aria-label': 'Task backlog source'
+        'aria-label': t('settings.taskBacklog.sourceLabel')
       }
     });
     select.disabled = createProviders.length === 0 || this.isCreatingTask;
@@ -284,15 +308,15 @@ export class TaskBacklogView extends ItemView {
       cls: 'tasks-backlog-new-title',
       attr: {
         type: 'text',
-        placeholder: 'New task',
-        'aria-label': 'New task name'
+        placeholder: t('settings.taskBacklog.placeholder'),
+        'aria-label': t('settings.taskBacklog.newTitleLabel')
       }
     });
     const addButton = form.createEl('button', {
       cls: 'tasks-backlog-add',
       attr: {
         type: 'submit',
-        'aria-label': 'Add task'
+        'aria-label': t('settings.taskBacklog.addBtnLabel')
       }
     });
     setIcon(addButton, 'plus');
@@ -308,6 +332,18 @@ export class TaskBacklogView extends ItemView {
         this.isCreatingTask ||
         this.newTaskTitle.trim().length === 0;
     });
+
+    // Documentation Link
+    const docRow = footer.createDiv({ cls: 'tasks-backlog-footer-help' });
+    docRow.createSpan({ text: t('settings.taskBacklog.helpText') });
+    docRow.appendChild(
+      createDocsLinksFragment([
+        {
+          text: t('settings.taskBacklog.learnMore'),
+          path: 'user/calendars/tasks-plugin-integration/'
+        }
+      ])
+    );
   }
 
   private renderEmptyState(container: HTMLElement): void {
