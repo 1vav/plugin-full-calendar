@@ -10,6 +10,7 @@ import type {
 import { t } from '../../features/i18n/i18n';
 import { dateEndpointsToFrontmatter, fromEventApi } from '../../core/interop';
 import { ViewContext } from './ViewContext';
+import { LinkedNoteIndex } from '../../providers/utils/LinkedNoteIndex';
 
 export class ViewEventInteractionHandler {
   constructor(private ctx: ViewContext) {}
@@ -48,7 +49,27 @@ export class ViewEventInteractionHandler {
 
   public async handleEventClick(info: EventClickArg): Promise<void> {
     try {
+      const instanceDate = info.event.start
+        ? DateTime.fromJSDate(info.event.start).toISODate() || undefined
+        : undefined;
+
       if (info.jsEvent.getModifierState('Control') || info.jsEvent.getModifierState('Meta')) {
+        const eventDetails = PluginState.getCache().store.getEventDetails(info.event.id);
+        if (eventDetails) {
+          const { calendarId, event } = eventDetails;
+          const provider = PluginState.getProviderRegistry().getInstance(calendarId);
+          if (provider && 'linkedNoteIndex' in provider && provider.linkedNoteIndex) {
+            const linkedFile = (provider.linkedNoteIndex as LinkedNoteIndex).getFileForEvent(
+              event.uid || '',
+              instanceDate
+            );
+            if (linkedFile) {
+              const leaf = this.ctx.app.workspace.getLeaf(true);
+              await leaf.openFile(linkedFile);
+              return;
+            }
+          }
+        }
         const { openFileForEvent } = await import('../../utils/eventActions');
         await openFileForEvent(PluginState.getCache(), this.ctx.app, info.event.id);
         return;
@@ -56,7 +77,7 @@ export class ViewEventInteractionHandler {
 
       if (!PluginState.getCache().isEventEditable(info.event.id)) {
         const { launchEventDetailsModal } = await import('../modals/event_modal');
-        launchEventDetailsModal(this.ctx.plugin, info.event.id);
+        launchEventDetailsModal(this.ctx.plugin, info.event.id, instanceDate);
         return;
       }
 
@@ -81,11 +102,11 @@ export class ViewEventInteractionHandler {
             `Provider for ${calendarId} claims hasCustomEditUI but method is not implemented.`
           );
           const { launchEditModal } = await import('../modals/event_modal');
-          launchEditModal(this.ctx.plugin, info.event.id);
+          launchEditModal(this.ctx.plugin, info.event.id, instanceDate);
         }
       } else {
         const { launchEditModal } = await import('../modals/event_modal');
-        launchEditModal(this.ctx.plugin, info.event.id);
+        launchEditModal(this.ctx.plugin, info.event.id, instanceDate);
       }
     } catch (e) {
       if (e instanceof Error) {
@@ -101,7 +122,7 @@ export class ViewEventInteractionHandler {
     allDay: boolean,
     viewType: string
   ): Promise<void> {
-    if (viewType === 'dayGridMonth') {
+    if (allDay) {
       end.setDate(end.getDate() - 1);
     }
     const displayZone =

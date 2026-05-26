@@ -146,9 +146,13 @@ nav:
                 - Reminders and Notifications: user/features/reminders.md
                 - Status Bar Integration: user/features/statusbar.md
                 - Internationalization: user/features/i18n.md
+                - Link Notes to Remote Events: user/features/event-linked-notes.md
+                - Live Preview Decorators: user/features/live-preview.md
+                - Embedded Code Block Calendars: user/features/embedded_calendars.md
           - Chrono Analyser: 
                 - user/chrono_analyser/index.md
                 - Introduction: user/chrono_analyser/introduction.md
+                - Embedded Charts: user/chrono_analyser/embedded_charts.md
                 - Use Cases: user/chrono_analyser/usecases.md
                 - Configuration: user/chrono_analyser/settings.md
                 - FAQ: user/chrono_analyser/faq.md
@@ -175,6 +179,7 @@ nav:
                 - Extending the Plugin: architecture/system/extending.md
                 - Testing and Validation: architecture/system/testing.md
                 - Backward Compatibility: architecture/system/backward-compatibility.md
+                - Live Preview System: architecture/system/live-preview.md
           - Provider Architecture:
                 - architecture/calendars/architecture.md
                 - Outlook Provider: architecture/calendars/outlook.md
@@ -193,8 +198,11 @@ nav:
                 - Milestones Architecture: architecture/system/features/milestones-architecture.md
                 - ActivityWatch Architecture: architecture/activitywatch/index.md
                 - ActivityWatch Implementation: architecture/activitywatch/implementation.md
+                - Linked Notes to Remote Events: architecture/system/features/event-linked-notes.md
+                - FCR Reminder Companion App: architecture/system/features/fcr-reminder-architecture.md
           - Views Architecture:
                 - architecture/views/architecture.md
+                - Unified Embedded Widgets Architecture: architecture/views/embedded_widgets.md
           - ChronoAnalyser:
                 - architecture/chrono_analyser/architecture.md
                 - Analysis Types Implementation: architecture/chrono_analyser/analysis-types.md

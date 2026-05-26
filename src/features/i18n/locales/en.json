@@ -1,6 +1,7 @@
 {
   "global": {
     "learnMore": "Learn more: ",
+    "learnMoreLink": "Learn more",
     "settingsHeader": "Switch between focused setting groups to keep configuration lighter and easier to scan."
   },
   "chrono": {
@@ -536,6 +537,46 @@
             "title": "Digital Librarian",
             "description": "Maintain over 10,000 non-deleted events across local calendars.",
             "target": "Target: 10,000 live local events"
+          },
+          "nightOwl": {
+            "title": "Night Owl",
+            "description": "Successfully perform 15 calendar operations during late-night hours (10 PM to 4 AM).",
+            "target": "Target: 15 late-night actions"
+          },
+          "earlyBird": {
+            "title": "Early Bird",
+            "description": "Successfully perform 15 calendar operations during early-morning hours (5 AM to 8 AM).",
+            "target": "Target: 15 early-morning actions"
+          },
+          "weekendWarrior": {
+            "title": "Weekend Warrior",
+            "description": "Perform 40 successful calendar operations on Saturdays and Sundays.",
+            "target": "Target: 40 weekend actions"
+          },
+          "timezoneNomad": {
+            "title": "Nomadic Scheduler",
+            "description": "Maintain events spanning 5 or more distinct time zones.",
+            "target": "Target: 5 distinct time zones"
+          },
+          "superOrganizer": {
+            "title": "Super Organizer",
+            "description": "Maintain 5 or more active workspace configurations.",
+            "target": "Target: 5 workspaces"
+          },
+          "nlpWhisperer": {
+            "title": "NLP Whisperer",
+            "description": "Create 50 events using FCR NLP quick-add commands.",
+            "target": "Target: 50 NLP creations"
+          },
+          "powerPlanner": {
+            "title": "Power Planner",
+            "description": "Keep at least 3 distinct calendar provider types concurrently configured and active.",
+            "target": "Target: 3 active provider types"
+          },
+          "devMilestone": {
+            "title": "Developer Milestone",
+            "description": "A developer testing milestone triggered immediately via dev: 1 in settings.",
+            "target": "Target: Dev Mode Active"
           }
         }
       }
@@ -563,7 +604,8 @@
         "outlook": "Outlook Calendar",
         "tasks": "Obsidian Tasks",
         "tasknotes": "TaskNotes",
-        "bases": "Obsidian Bases"
+        "bases": "Obsidian Bases",
+        "holidays": "Holidays"
       },
       "fullNote": {
         "directory": {
@@ -648,6 +690,47 @@
         },
         "adding": "Adding...",
         "cancel": "Cancel"
+      },
+      "holidays": {
+        "calendarName": {
+          "label": "Calendar Name",
+          "description": "Display name shown in the calendar list"
+        },
+        "country": {
+          "label": "Country",
+          "description": "ISO 3166-1 alpha-2 country code, e.g. US, GB, DE, CA."
+        },
+        "state": {
+          "label": "State / Province",
+          "description": "State or province code for regional holidays, e.g. ca, ny, on, by. Leave empty for national holidays only."
+        },
+        "region": {
+          "label": "Region",
+          "description": "Sub-state region code for city or district level holidays. Leave empty if not needed."
+        },
+        "holidayTypes": {
+          "label": "Holiday Types",
+          "description": "Which tiers of holidays to display.",
+          "options": {
+            "public": "Public holidays only",
+            "public_bank": "Public + Bank holidays",
+            "public_bank_observance": "Public + Bank + Observance",
+            "all_except_optional": "All except optional",
+            "all": "All types"
+          }
+        },
+        "display": {
+          "label": "Display Style",
+          "description": "How holiday events are rendered on the calendar.",
+          "options": {
+            "block": "Normal event (block)",
+            "background": "Background event",
+            "inverseBackground": "Inverse background",
+            "auto": "Auto",
+            "none": "Hidden"
+          }
+        },
+        "adding": "Adding..."
       },
       "docs": {
         "providerGuides": "Provider guides: ",

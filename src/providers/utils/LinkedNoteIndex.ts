@@ -6,13 +6,91 @@ export class LinkedNoteIndex {
   private calendarId: string;
   private index = new Map<string, TFile>(); // uid -> TFile
   private eventRefs: EventRef[] = [];
+  private revision = 0;
+  private startupHydrationPending = false;
 
   constructor(app: App, calendarId: string) {
     this.app = app;
     this.calendarId = calendarId;
   }
 
-  public getFileForEvent(eventUid: string): TFile | null {
+  private scanDirectory(): TFile[] {
+    const dir = this.getDirectory().trim();
+    if (!dir) {
+      return [];
+    }
+
+    const unresolvedFiles: TFile[] = [];
+    const files = this.app.vault.getMarkdownFiles();
+
+    for (const file of files) {
+      if (this.isFileInDirectory(file)) {
+        if (!this.app.metadataCache.getFileCache(file)) {
+          unresolvedFiles.push(file);
+        }
+        this.processFile(file, false);
+      }
+    }
+
+    return unresolvedFiles;
+  }
+
+  private beginStartupHydration(revision: number): void {
+    this.startupHydrationPending = true;
+
+    const resolvedRef = this.app.metadataCache.on('resolved', () => {
+      if (!this.startupHydrationPending || revision !== this.revision) {
+        return;
+      }
+
+      this.reconcileStartupHydration(revision);
+    });
+    this.eventRefs.push(resolvedRef);
+  }
+
+  private reconcileStartupHydration(revision: number): void {
+    if (revision !== this.revision) {
+      return;
+    }
+
+    const unresolvedFiles = this.scanDirectory();
+    if (this.index.size > 0) {
+      this.completeStartupHydration(revision);
+      return;
+    }
+
+    if (unresolvedFiles.length > 0) {
+      void this.backfillUnresolvedFiles(unresolvedFiles, revision);
+      return;
+    }
+  }
+
+  private completeStartupHydration(revision: number): void {
+    if (revision !== this.revision) {
+      return;
+    }
+
+    this.startupHydrationPending = false;
+  }
+
+  private scheduleLayoutReadyRescan(revision: number): void {
+    this.app.workspace.onLayoutReady(() => {
+      if (revision !== this.revision) {
+        return;
+      }
+
+      this.reconcileStartupHydration(revision);
+    });
+  }
+
+  public getFileForEvent(eventUid: string, recurrenceId?: string): TFile | null {
+    if (recurrenceId) {
+      const instanceKey = `${eventUid}::${recurrenceId.trim()}`;
+      const instanceFile = this.index.get(instanceKey);
+      if (instanceFile) {
+        return instanceFile;
+      }
+    }
     return this.index.get(eventUid) || null;
   }
 
@@ -31,16 +109,55 @@ export class LinkedNoteIndex {
   public initialize(): void {
     this.destroy();
     const dir = this.getDirectory().trim();
-    if (!dir) return;
-
-    const files = this.app.vault.getMarkdownFiles();
-    for (const file of files) {
-      if (this.isFileInDirectory(file)) {
-        this.processFile(file, false);
-      }
+    if (!dir) {
+      return;
     }
 
+    const activeRevision = this.revision;
+    const unresolvedFiles = this.scanDirectory();
+
     this.registerWatchers();
+    this.beginStartupHydration(activeRevision);
+    this.scheduleLayoutReadyRescan(activeRevision);
+
+    if (unresolvedFiles.length > 0) {
+      void this.backfillUnresolvedFiles(unresolvedFiles, activeRevision);
+    } else if (this.index.size > 0) {
+      this.completeStartupHydration(activeRevision);
+    }
+  }
+
+  private async backfillUnresolvedFiles(files: TFile[], revision: number): Promise<void> {
+    const appWithMetadata = this.app as App & {
+      waitForMetadata?: (file: TFile) => Promise<unknown>;
+    };
+    if (typeof appWithMetadata.waitForMetadata !== 'function') {
+      return;
+    }
+
+    let changed = false;
+
+    for (const file of files) {
+      try {
+        await appWithMetadata.waitForMetadata(file);
+      } catch {
+        continue;
+      }
+
+      if (revision !== this.revision || !this.isFileInDirectory(file)) {
+        return;
+      }
+
+      changed = this.processFile(file, false) || changed;
+    }
+
+    if (changed && revision === this.revision) {
+      this.triggerReload();
+    }
+
+    if (revision === this.revision) {
+      this.reconcileStartupHydration(revision);
+    }
   }
 
   private processFile(file: TFile, triggerReload = true): boolean {
@@ -54,11 +171,27 @@ export class LinkedNoteIndex {
 
     const calId = frontmatter['fc-calendar-id'] as unknown;
     const eventUid = frontmatter['fc-event-uid'] as unknown;
+    const recurrenceId = frontmatter['fc-event-recurrence-id'] as unknown;
 
     if (calId === this.calendarId && typeof eventUid === 'string' && eventUid.trim() !== '') {
-      const prevFile = this.index.get(eventUid);
-      if (prevFile?.path !== file.path) {
-        this.index.set(eventUid, file);
+      const recurrenceSuffix =
+        typeof recurrenceId === 'string' && recurrenceId.trim() !== ''
+          ? `::${recurrenceId.trim()}`
+          : '';
+      const key = `${eventUid}${recurrenceSuffix}`;
+
+      // Clean up any stale mappings in the index map that point to the same file path but have a different key
+      let removedOld = false;
+      for (const [k, indexedFile] of this.index.entries()) {
+        if (indexedFile.path === file.path && k !== key) {
+          this.index.delete(k);
+          removedOld = true;
+        }
+      }
+
+      const prevFile = this.index.get(key);
+      if (prevFile?.path !== file.path || removedOld) {
+        this.index.set(key, file);
         if (triggerReload) {
           this.triggerReload();
         }
@@ -73,9 +206,9 @@ export class LinkedNoteIndex {
 
   private removePathFromIndex(path: string, triggerReload = true): boolean {
     let removed = false;
-    for (const [uid, indexedFile] of this.index.entries()) {
+    for (const [key, indexedFile] of this.index.entries()) {
       if (indexedFile.path === path) {
-        this.index.delete(uid);
+        this.index.delete(key);
         removed = true;
       }
     }
@@ -109,6 +242,13 @@ export class LinkedNoteIndex {
     });
     this.eventRefs.push(changedRef);
 
+    const createRef = this.app.vault.on('create', file => {
+      if (file instanceof TFile && this.isFileInDirectory(file)) {
+        this.processFile(file);
+      }
+    });
+    this.eventRefs.push(createRef);
+
     const deleteRef = this.app.vault.on('delete', file => {
       if (file instanceof TFile) {
         this.removePathFromIndex(file.path);
@@ -133,6 +273,8 @@ export class LinkedNoteIndex {
   }
 
   public destroy(): void {
+    this.revision += 1;
+    this.startupHydrationPending = false;
     for (const ref of this.eventRefs) {
       // metadataCache and vault can offref their listeners
       this.app.metadataCache.offref(ref);

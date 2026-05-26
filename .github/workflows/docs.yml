@@ -64,7 +64,7 @@ jobs:
         run: cp docs/assets/meta/google-auth-callback.html site/
       
       - name: Copy static files 2
-        run: cp docs/assets/meta/google5612e1450dc0c1ac.html site/
+        run: cp docs/assets/meta/googlef764ec34bcd1fe4a.html site/
 
       - name: Copy changelogs JSON
         run: cp docs/assets/meta/changelogs.json site/
