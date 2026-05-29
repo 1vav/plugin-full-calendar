@@ -1,5 +1,6 @@
 # mkdocs.yaml
 site_name: Full Calendar Remastered
+site_url: https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/
 repo_url: https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar
 repo_name: obsidian-full-calendar-remastered/plugin-full-calendar
 theme:
@@ -121,6 +122,7 @@ nav:
                 - ICS (Remote and Local): user/calendars/ics.md
                 - CalDAV: user/calendars/caldav.md
                 - Google Calendar: user/calendars/gcal.md
+                - Google Tasks: user/calendars/gtasks.md
                 - Outlook Calendar: user/calendars/outlook.md
                 - Tasks Plugin Integration: user/calendars/tasks-plugin-integration.md
                 - TaskNotes Integration: user/calendars/tasknotes.md
@@ -141,6 +143,7 @@ nav:
           - Features:    
                 - user/features/index.md
                 - FCR Command (NLP): user/features/nlp.md
+                - Task Backlog Panel: user/features/tasks-backlog.md
                 - Interactions and Gestures: user/features/interactions.md
                 - Milestones and Progress: user/features/milestones.md
                 - Reminders and Notifications: user/features/reminders.md
@@ -169,6 +172,7 @@ nav:
           - System:
                 - architecture/system/overview.md
                 - Event Cache: architecture/system/eventcache.md
+                - Event Filtering & Sorting: architecture/system/event-filtering-sorting.md
                 - Performance and Staged Loading: architecture/system/performance.md
                 - Event Storage and Identifiers: architecture/system/event-storage.md
                 - FullCalendar Interop: architecture/system/interop.md

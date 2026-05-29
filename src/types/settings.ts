@@ -182,6 +182,9 @@ export interface FullCalendarSettings {
   activityWatch: ActivityWatchSettings;
   tasksIntegration: TasksIntegrationSettings;
   milestones: MilestonesSettings;
+  enableMonthlyStatsReport: boolean;
+  lastMonthlyMilestonesGeneratedMonth: string | null;
+  lastMonthlyMilestonesCheckDate: string | null;
   fcrReminderCompanion: FcrReminderCompanionSettings;
   apiTokens?: Record<string, ApiTokenRecord>;
   authorizedTokens?: Record<string, { pluginId: string; reason: string; grantedAt: number }>;
@@ -193,6 +196,11 @@ export interface FullCalendarSettings {
   linkedNoteTemplate: string;
   taskBacklogLastProviderId: string;
   caldavTaskInboxLastCalendarId: string;
+  weatherCity: string;
+  weatherLatitude: number | null;
+  weatherLongitude: number | null;
+  weatherHide: boolean;
+  weatherInputMode: 'city' | 'coords';
 }
 
 export const DEFAULT_SETTINGS: FullCalendarSettings = {
@@ -263,6 +271,9 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
     counters: {},
     unlockedAt: {}
   },
+  enableMonthlyStatsReport: true,
+  lastMonthlyMilestonesGeneratedMonth: null,
+  lastMonthlyMilestonesCheckDate: null,
   fcrReminderCompanion: {
     enabled: false,
     apiUrl: 'http://127.0.0.1:45677'
@@ -276,6 +287,11 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
   linkedNotesDirectory: '',
   taskBacklogLastProviderId: '',
   caldavTaskInboxLastCalendarId: '',
+  weatherCity: '',
+  weatherLatitude: null,
+  weatherLongitude: null,
+  weatherHide: false,
+  weatherInputMode: 'city',
   linkedNoteTemplate:
     '# {{title}}\n\n**Date**: {{date}}\n**Time**: {{timeString}}\n**Location**: {{location}}\n**Calendar**: {{calendarName}}\n\n## Description\n{{description}}\n\n## Notes\n- '
 };

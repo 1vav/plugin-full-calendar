@@ -869,7 +869,8 @@ describe('TasksPluginProvider', () => {
 
     it('filters backlog tasks by the dedicated backlog query without enabling the global query', async () => {
       mockPlugin.settings.tasksIntegration.includeGlobalQueryInBacklog = false;
-      mockPlugin.settings.tasksIntegration.backlogQuery = 'folder includes Projects\ntags do not include someday';
+      mockPlugin.settings.tasksIntegration.backlogQuery =
+        'folder includes Projects\ntags do not include someday';
       tasksPluginSettings.globalQuery = 'path does not include Projects';
 
       mockPlugin.app.workspace.trigger.mockImplementation(
