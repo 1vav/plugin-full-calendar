@@ -25,6 +25,7 @@ import {
 } from '../../features/linked-notes/linkedNotes';
 import { parseTimezoneAwareString } from '../../features/timezone/Timezone';
 import { PluginState } from '../../core/PluginState';
+import { DateTime } from 'luxon';
 
 import { fetchCalendarInfo } from './helper_caldav';
 
@@ -241,6 +242,61 @@ function findTodoByUid(vcalendar: ical.Component, uid: string): ical.Component |
   const normalizedUid = uid.trim();
   return (
     vcalendar.getAllSubcomponents('vtodo').find(todo => getTaskUid(todo) === normalizedUid) ?? null
+  );
+}
+
+function getComponentUid(component: ical.Component): string {
+  return getTextProperty(component, 'uid').trim();
+}
+
+function normalizeRecurrenceIdString(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+
+  const dt = DateTime.fromISO(trimmed, { setZone: true });
+  if (!dt.isValid) return trimmed;
+  return dt.toISO({ suppressMilliseconds: true });
+}
+
+function getComponentRecurrenceId(component: ical.Component): string | null {
+  const prop = component.getFirstProperty('recurrence-id');
+  if (!prop) return null;
+
+  const value = prop.getFirstValue();
+  if (!(value instanceof ical.Time)) {
+    return normalizeRecurrenceIdString(String(value));
+  }
+
+  const dt = parseTimezoneAwareString(value);
+  if (value.isDate) {
+    return dt.toISODate();
+  }
+  return dt.toISO({ suppressMilliseconds: true });
+}
+
+function findVEventOverride(
+  vcalendar: ical.Component,
+  uid: string,
+  recurrenceId: string
+): ical.Component | null {
+  const normalizedRecurrenceId = normalizeRecurrenceIdString(recurrenceId);
+  if (!normalizedRecurrenceId) return null;
+
+  return (
+    vcalendar
+      .getAllSubcomponents('vevent')
+      .find(
+        vevent =>
+          getComponentUid(vevent) === uid &&
+          getComponentRecurrenceId(vevent) === normalizedRecurrenceId
+      ) ?? null
+  );
+}
+
+function removeSubcomponent(vcalendar: ical.Component, subcomponent: ical.Component): void {
+  (vcalendar as unknown as { removeSubcomponent(component: ical.Component): void }).removeSubcomponent(
+    subcomponent
   );
 }
 
@@ -780,16 +836,32 @@ export class CalDAVProvider
   }
 
   getCapabilities(): CalendarProviderCapabilities {
-    return { canCreate: true, canEdit: true, canDelete: true };
+    return {
+      canCreate: true,
+      canEdit: true,
+      canDelete: true,
+      supportsAlarms: true,
+      ownsRecurringInstanceOverrides: true
+    };
   }
 
   getEventHandle(event: OFCEvent): EventHandle | null {
-    return event.uid ? { persistentId: event.uid } : null;
+    const context = {
+      uid: event.uid,
+      recurrenceId: event.recurrenceId
+    };
+    if (event.caldavHref) {
+      return { persistentId: event.caldavHref, ...context };
+    }
+    return event.uid ? { persistentId: event.uid, ...context } : null;
   }
 
   computeSyncKey(event: OFCEvent): string {
     if (event.type === 'rrule' && event.id) {
       return event.id;
+    }
+    if (event.uid && event.recurrenceId) {
+      return `${event.uid}::${event.recurrenceId}`;
     }
     return event.uid || JSON.stringify(event);
   }
@@ -832,10 +904,13 @@ export class CalDAVProvider
       const parsedEvents: OFCEvent[] = [];
       let parseFailures = 0;
 
-      for (const { ics, etag } of icsList) {
+      for (const { ics, etag, href } of icsList) {
         try {
           const events = getEventsFromICS(ics).map(ev => {
             if (etag) ev.etag = etag.replace(/"/g, ''); // standard ETag usually has quotes
+            if (href) {
+              ev.caldavHref = href;
+            }
             return ev;
           });
           parsedEvents.push(...events);
@@ -1083,15 +1158,19 @@ export class CalDAVProvider
     oldEvent: OFCEvent,
     newEvent: OFCEvent
   ): Promise<EventLocation | null> {
-    const uid = handle.persistentId;
+    const href = handle.persistentId;
     if (!newEvent.uid) {
-      newEvent.uid = uid;
+      newEvent.uid = oldEvent.uid || this.getUidFromHref(href);
+    }
+
+    const url = this.resolveEventObjectUrl(href);
+    if (oldEvent.recurrenceId && oldEvent.uid) {
+      await this.updateRecurrenceOverride(url, oldEvent, newEvent);
+      return null;
     }
 
     // Convert to ICS
     const icsContent = eventToIcs(newEvent);
-
-    const url = `${canonCollection(this.source.homeUrl)}${uid}.ics`;
 
     // PUT to update
     await this.doRequest(url, {
@@ -1109,8 +1188,12 @@ export class CalDAVProvider
   }
 
   async deleteEvent(handle: EventHandle): Promise<void> {
-    const uid = handle.persistentId;
-    const url = `${canonCollection(this.source.homeUrl)}${uid}.ics`;
+    const url = this.resolveEventObjectUrl(handle.persistentId);
+
+    if (handle.uid && handle.recurrenceId) {
+      await this.deleteRecurrenceOverride(url, handle.uid, handle.recurrenceId);
+      return;
+    }
 
     await this.doRequest(url, {
       method: 'DELETE'
@@ -1265,8 +1348,11 @@ export class CalDAVProvider
     if (!masterEvent.uid) {
       throw new Error('Cannot create override: Master event has no UID.');
     }
-    const uid = masterEvent.uid;
-    const url = `${canonCollection(this.source.homeUrl)}${uid}.ics`;
+    const handle = this.getEventHandle(masterEvent);
+    if (!handle) {
+      throw new Error('Cannot create override: Master event has no CalDAV object reference.');
+    }
+    const url = this.resolveEventObjectUrl(handle.persistentId);
 
     // Fetch existing
     // We need to fetch the raw text of the ICS file.
@@ -1288,7 +1374,19 @@ export class CalDAVProvider
     const vcalendar = new ical.Component(jcal);
 
     // 3. Create the Override VEVENT
-    const overrideVEvent = createOverrideVEvent(newEventData, instanceDate);
+    const originalInstanceStart =
+      masterEvent.allDay || !('startTime' in masterEvent)
+        ? instanceDate
+        : `${instanceDate}T${masterEvent.startTime}`;
+    const overrideEventData: OFCEvent = {
+      ...newEventData,
+      uid: masterEvent.uid,
+      timezone: newEventData.timezone || masterEvent.timezone,
+      recurrenceId: originalInstanceStart,
+      notify: newEventData.notify !== undefined ? newEventData.notify : masterEvent.notify,
+      alarms: newEventData.alarms !== undefined ? newEventData.alarms : masterEvent.alarms
+    };
+    const overrideVEvent = createOverrideVEvent(overrideEventData, originalInstanceStart);
 
     // 4. Merge: Add the new VEVENT to the VCALENDAR
     vcalendar.addSubcomponent(overrideVEvent);
@@ -1307,7 +1405,73 @@ export class CalDAVProvider
       body: newIcsContent
     });
 
-    return [newEventData, null];
+    return [overrideEventData, null];
+  }
+
+  private async fetchVCalendar(url: string): Promise<ical.Component> {
+    const headers: Record<string, string> = {};
+    const authHeader = createBasicAuthHeader(this.source.username, this.source.password);
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    const res = await obsidianFetch(url, { method: 'GET', headers });
+    if (res.status >= 300) {
+      throw new Error(`Failed to fetch original event: ${res.status}`);
+    }
+    return parseVCalendar(await res.text());
+  }
+
+  private async putVCalendar(url: string, vcalendar: ical.Component): Promise<void> {
+    await this.doRequest(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'text/calendar; charset=utf-8'
+      },
+      body: (vcalendar as unknown as { toString(): string }).toString()
+    });
+  }
+
+  private async updateRecurrenceOverride(
+    url: string,
+    oldEvent: OFCEvent,
+    newEvent: OFCEvent
+  ): Promise<void> {
+    if (!oldEvent.uid || !oldEvent.recurrenceId) {
+      throw new Error('Cannot update CalDAV recurrence override without UID and RECURRENCE-ID.');
+    }
+
+    const vcalendar = await this.fetchVCalendar(url);
+    const existingOverride = findVEventOverride(vcalendar, oldEvent.uid, oldEvent.recurrenceId);
+    if (!existingOverride) {
+      throw new Error('Could not find CalDAV recurrence override to update.');
+    }
+
+    removeSubcomponent(vcalendar, existingOverride);
+    const overrideEventData: OFCEvent = {
+      ...newEvent,
+      uid: oldEvent.uid,
+      recurrenceId: oldEvent.recurrenceId,
+      timezone: newEvent.timezone || oldEvent.timezone
+    };
+    vcalendar.addSubcomponent(createOverrideVEvent(overrideEventData, oldEvent.recurrenceId));
+
+    await this.putVCalendar(url, vcalendar);
+  }
+
+  private async deleteRecurrenceOverride(
+    url: string,
+    uid: string,
+    recurrenceId: string
+  ): Promise<void> {
+    const vcalendar = await this.fetchVCalendar(url);
+    const existingOverride = findVEventOverride(vcalendar, uid, recurrenceId);
+    if (!existingOverride) {
+      throw new Error('Could not find CalDAV recurrence override to delete.');
+    }
+
+    removeSubcomponent(vcalendar, existingOverride);
+    await this.putVCalendar(url, vcalendar);
   }
 
   // Helper to attach auth and fetch
@@ -1324,6 +1488,25 @@ export class CalDAVProvider
       throw new Error(`CalDAV request failed: ${res.status} ${res.statusText}`);
     }
     return res;
+  }
+
+  private resolveEventObjectUrl(persistentId: string): string {
+    if (/^https?:\/\//i.test(persistentId)) {
+      return persistentId;
+    }
+    if (persistentId.endsWith('.ics') || persistentId.includes('/')) {
+      return resolveCollectionObjectUrl(this.source.homeUrl, persistentId);
+    }
+    return `${canonCollection(this.source.homeUrl)}${persistentId}.ics`;
+  }
+
+  private getUidFromHref(href: string): string {
+    return decodeURIComponent(
+      href
+        .split('/')
+        .pop()
+        ?.replace(/\.ics$/i, '') || href
+    );
   }
 
   // Boilerplate methods for the provider interface.
