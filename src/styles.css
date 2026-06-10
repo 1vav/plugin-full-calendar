@@ -23,14 +23,14 @@
   padding: 0 10px;
 }
 
-.event-details-header {
+.full-calendar-event-details .event-details-header {
   display: flex;
   align-items: center;
   gap: 15px;
   margin-bottom: 20px;
 }
 
-.event-details-icon-box {
+.full-calendar-event-details .event-details-icon-box {
   width: 40px;
   height: 40px;
   border: 1px solid var(--background-modifier-border);
@@ -40,20 +40,20 @@
   border-radius: 4px;
 }
 
-.event-details-title {
+.full-calendar-event-details .event-details-title {
   margin: 0;
   font-size: 1.2em;
   font-weight: 600;
 }
 
-.event-details-row {
+.full-calendar-event-details .event-details-row {
   display: flex;
   gap: 15px;
   margin-bottom: 15px;
   align-items: flex-start;
 }
 
-.event-details-icon {
+.full-calendar-event-details .event-details-icon {
   color: var(--text-muted);
   width: 20px;
   height: 20px;
@@ -61,16 +61,16 @@
   margin-top: 2px;
 }
 
-.event-details-content {
+.full-calendar-event-details .event-details-content {
   flex-grow: 1;
   overflow-wrap: anywhere;
 }
 
-.event-details-content.description {
+.full-calendar-event-details .event-details-content.description {
   white-space: pre-wrap;
 }
 
-.event-details-action {
+.full-calendar-event-details .event-details-action {
   margin-left: 15px;
   color: var(--text-accent);
   cursor: pointer;
@@ -80,61 +80,61 @@
   font-size: 0.9em;
 }
 
-.event-details-action:hover {
+.full-calendar-event-details .event-details-action:hover {
   text-decoration: underline;
 }
 
-.event-link {
+.full-calendar-event-details .event-link {
   color: var(--text-accent);
   text-decoration: none;
 }
 
-.event-link:hover {
+.full-calendar-event-details .event-link:hover {
   text-decoration: underline;
 }
 
-.upcoming-instances {
+.full-calendar-event-details .ofc-upcoming-instances {
   background-color: var(--background-secondary);
   padding: 10px;
   border-radius: 4px;
   font-size: 0.9em;
 }
 
-.upcoming-instances ul {
+.full-calendar-event-details .ofc-upcoming-instances ul {
   margin: 5px 0 0 20px;
   padding: 0;
 }
 
-.u-muted {
+.full-calendar-event-details .ofc-u-muted {
   color: var(--text-muted);
 }
 
 /* Shared settings modal shell/footer layout */
-.settings-modal-wide {
+.ofc-settings-modal-wide {
   width: min(900px, 88vw);
   max-width: 900px;
   max-height: min(860px, 88vh);
 }
 
-.settings-modal-wide .modal-content {
+.ofc-settings-modal-wide .modal-content {
   padding: 0;
   overflow: hidden;
 }
 
-.settings-modal-shell {
+.ofc-settings-modal-shell {
   display: flex;
   flex-direction: column;
   max-height: min(860px, 88vh);
   min-height: min(620px, 82vh);
 }
 
-.settings-modal-body {
+.ofc-settings-modal-body {
   flex: 1 1 auto;
   overflow-y: auto;
   padding: 18px 22px;
 }
 
-.settings-modal-footer {
+.ofc-settings-modal-footer {
   align-items: center;
   background-color: var(--background-primary);
   border-top: 1px solid var(--background-modifier-border);
@@ -279,17 +279,17 @@
 }
 
 @media (max-width: 640px) {
-  .settings-modal-wide {
+  .ofc-settings-modal-wide {
     width: 96vw;
     max-height: 94vh;
   }
 
-  .settings-modal-shell {
+  .ofc-settings-modal-shell {
     max-height: 94vh;
     min-height: 80vh;
   }
 
-  .settings-modal-body {
+  .ofc-settings-modal-body {
     padding: 14px;
   }
 
@@ -307,11 +307,11 @@
     justify-self: start;
   }
 
-  .settings-modal-footer {
+  .ofc-settings-modal-footer {
     padding: 10px 14px;
   }
 
-  .settings-modal-footer button {
+  .ofc-settings-modal-footer button {
     flex: 1 1 0;
   }
 }
@@ -478,17 +478,12 @@
   pointer-events: auto;
   width: 360px;
   max-width: calc(100vw - 48px);
-  border-radius: 14px;
-  padding: 16px 18px;
-  background: linear-gradient(135deg, rgba(30, 27, 42, 0.96), rgba(15, 12, 22, 0.99));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 215, 0, 0.38);
-  box-shadow: 
-    0 12px 36px rgba(0, 0, 0, 0.55), 
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-    0 0 24px rgba(255, 215, 0, 0.18);
-  color: #ffffff;
+  border-radius: 8px;
+  padding: 16px 36px 16px 18px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--shadow-l);
+  color: var(--text-normal);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -506,8 +501,7 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(180deg, #ffd700, #ff8c00, #ff007f);
-  box-shadow: 0 0 10px #ffd700;
+  background: linear-gradient(180deg, var(--text-accent), var(--interactive-accent));
 }
 
 /* Shimmer reflection sweep animation */
@@ -518,7 +512,7 @@
   left: -150%;
   width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
   transform: skewX(-25deg);
   animation: ofc-toast-shimmer 4s infinite ease-in-out;
 }
@@ -528,8 +522,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  color: #ffd700;
-  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+  color: var(--text-accent);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -543,9 +536,30 @@
 
 .ofc-milestone-toast-body {
   font-size: var(--font-ui-medium, 13px);
-  color: #e0e0ea;
+  color: var(--text-normal);
   line-height: 1.45;
   font-weight: 500;
+}
+
+.ofc-milestone-toast-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.ofc-milestone-toast-close:hover {
+  color: var(--text-normal);
+  background-color: var(--background-modifier-hover);
 }
 
 .ofc-milestone-toast-hide {
@@ -588,7 +602,7 @@
 .ofc-milestone-toast-footer {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--background-modifier-border);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -596,7 +610,7 @@
 
 .ofc-milestone-toast-footer-desc {
   font-size: var(--font-ui-small, 12px);
-  color: #a0a0b8;
+  color: var(--text-muted);
   line-height: 1.35;
   font-weight: 500;
 }
@@ -621,27 +635,23 @@
 }
 
 .ofc-milestone-toast-btn.btn-primary {
-  background: #ffd700;
-  color: #0b0914;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
 }
 
 .ofc-milestone-toast-btn.btn-primary:hover {
-  background: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.4);
+  background: var(--interactive-accent-hover);
 }
 
 .ofc-milestone-toast-btn.btn-secondary {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: var(--btn-background, var(--background-secondary-alt));
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
 }
 
 .ofc-milestone-toast-btn.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.35);
-  transform: translateY(-1px);
+  background: var(--btn-background-hover, var(--background-secondary));
+  border-color: var(--background-modifier-border-hover, var(--background-modifier-border));
 }
 
 .ofc-nlp-preview-description {
@@ -697,7 +707,10 @@
 /* Live Preview Event Decorations styling */
 
 /* Override CodeMirror/Obsidian list indent styles to allow full event pill alignment without double checkboxes/bullets */
-.fc-lp-line-override {
+.markdown-source-view.mod-cm6 .cm-content .cm-line.fc-lp-line-override {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding-left: 0;
   /* text-indent: 0; */
   margin-left: 0;
@@ -710,7 +723,7 @@
 }
 
 .fc-lp-inline-event-wrapper {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
   background-color: var(--background-secondary-alt);
@@ -720,12 +733,18 @@
   padding: 4px 10px;
   margin: 0;
   width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   box-sizing: border-box;
   font-family: inherit;
   line-height: 1.3;
   vertical-align: top;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
   cursor: pointer;
+}
+
+.markdown-source-view.mod-cm6 .cm-content .fc-lp-hidden-text {
+  display: none;
 }
 
 .fc-lp-inline-event-wrapper:hover {
@@ -1039,7 +1058,8 @@
 }
 
 /* Fix grayed out monthly view other-month cells (keep them fully bright and ungrayed) */
-.fc .fc-day-other {
+.ofc-calendar-shell .fc .fc-day-other,
+.ofc-embedded-calendar-container .fc .fc-day-other {
   opacity: 1;
 }
 
@@ -1058,7 +1078,8 @@
 }
 
 /* Adjust FullCalendar DayGrid Top layout for month-view emoji alignment */
-.fc .fc-daygrid-day-top {
+.ofc-calendar-shell .fc .fc-daygrid-day-top,
+.ofc-embedded-calendar-container .fc .fc-daygrid-day-top {
   display: flex;
   flex-direction: row-reverse;
   justify-content: space-between;

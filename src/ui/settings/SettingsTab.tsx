@@ -316,6 +316,7 @@ export class FullCalendarSettingTab extends PluginSettingTab {
   private calendarSettingsRef: React.RefObject<CalendarSettingsRef | null> =
     createRef<CalendarSettingsRef>();
   registry: ProviderRegistry;
+  private reactRoots: ReactDOM.Root[] = [];
 
   constructor(app: App, plugin: FullCalendarPlugin, registry: ProviderRegistry) {
     super(app, plugin);
@@ -323,11 +324,27 @@ export class FullCalendarSettingTab extends PluginSettingTab {
     this.registry = registry;
   }
 
+  public registerReactRoot(root: ReactDOM.Root): void {
+    this.reactRoots.push(root);
+  }
+
+  public unmountReactRoots(): void {
+    this.reactRoots.forEach(root => {
+      try {
+        root.unmount();
+      } catch (e) {
+        console.warn('Full Calendar: Failed to unmount React root', e);
+      }
+    });
+    this.reactRoots = [];
+  }
+
   display(): void {
     this.renderSettings();
   }
 
   renderSettings(): void {
+    this.unmountReactRoots();
     void (async () => {
       this.containerEl.empty();
       if (this.showFullChangelog) {
@@ -354,6 +371,7 @@ export class FullCalendarSettingTab extends PluginSettingTab {
 
   private async _renderFullChangelog(): Promise<void> {
     const root = ReactDOM.createRoot(this.containerEl);
+    this.registerReactRoot(root);
     const { Changelog } = await import('./changelogs/Changelog');
     root.render(
       createElement(Changelog, {
@@ -509,10 +527,13 @@ export class FullCalendarSettingTab extends PluginSettingTab {
 
     for (const card of cards) {
       const cardEl = content.createDiv({
-        cls: `full-calendar-change-item ${card.unlocked ? 'change-type-new' : 'change-type-improvement'} ofc-milestone-card ${card.unlocked ? 'is-unlocked' : 'is-locked'}`
+        cls: `full-calendar-change-item ${card.unlocked ? 'full-calendar-change-type-new' : 'full-calendar-change-type-improvement'} ofc-milestone-card ${card.unlocked ? 'is-unlocked' : 'is-locked'}`
       });
 
-      cardEl.createDiv({ text: selectMilestoneIcon(card.id, card.unlocked), cls: 'change-icon' });
+      cardEl.createDiv({
+        text: selectMilestoneIcon(card.id, card.unlocked),
+        cls: 'full-calendar-change-icon'
+      });
       const cardContent = cardEl.createDiv({ cls: 'change-content u-flex-grow-1' });
 
       const topRow = cardContent.createDiv({ cls: 'full-calendar-whats-new-header' });
@@ -526,7 +547,7 @@ export class FullCalendarSettingTab extends PluginSettingTab {
 
       cardContent.createDiv({
         text: `${card.targetLabel} • ${card.description}`,
-        cls: 'change-description'
+        cls: 'full-calendar-change-description'
       });
 
       const progressTrack = cardContent.createDiv({ cls: 'ofc-milestone-progress-track' });
@@ -679,7 +700,7 @@ export class FullCalendarSettingTab extends PluginSettingTab {
         renderRemindersSettings(containerEl, this.plugin, () => {
           this.renderSettings();
         });
-        renderWhatsNew(containerEl, () => {
+        renderWhatsNew(containerEl, this, () => {
           this.showFullChangelog = true;
           this.renderSettings();
         });
@@ -700,7 +721,7 @@ export class FullCalendarSettingTab extends PluginSettingTab {
         ]);
         renderCalendarManagement(
           containerEl,
-          this.plugin,
+          this,
           this.calendarSettingsRef as unknown as React.RefObject<CalendarSettingsRef>
         );
         break;
@@ -714,7 +735,7 @@ export class FullCalendarSettingTab extends PluginSettingTab {
         renderWorkspaceSettings(containerEl, this.plugin, () => {
           this.renderSettings();
         });
-        renderCategorizationSettings(containerEl, this.plugin, () => {
+        renderCategorizationSettings(containerEl, this, () => {
           this.renderSettings();
         });
         break;
