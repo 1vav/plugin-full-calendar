@@ -297,9 +297,9 @@ function findVEventOverride(
 }
 
 function removeSubcomponent(vcalendar: ical.Component, subcomponent: ical.Component): void {
-  (vcalendar as unknown as { removeSubcomponent(component: ical.Component): void }).removeSubcomponent(
-    subcomponent
-  );
+  (
+    vcalendar as unknown as { removeSubcomponent(component: ical.Component): void }
+  ).removeSubcomponent(subcomponent);
 }
 
 function parseUnscheduledTasksFromObject(
@@ -910,7 +910,9 @@ export class CalDAVProvider
     if (!file) return;
 
     const contents = await this.plugin.app.vault.read(file);
-    const removals = Object.fromEntries(LINKED_TASK_DATE_PROPERTIES.map(property => [property, null]));
+    const removals = Object.fromEntries(
+      LINKED_TASK_DATE_PROPERTIES.map(property => [property, null])
+    );
     const updatedContents = modifyFrontmatterString(contents, removals);
     if (updatedContents !== contents) {
       await this.plugin.app.vault.modify(file, updatedContents);

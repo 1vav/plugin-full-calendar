@@ -294,6 +294,9 @@ describe('GoogleProvider getEvents', () => {
 
     const cancelledAllday = events.find(e => e[0].uid === 'master_allday_20260602');
     expect(cancelledAllday).toBeUndefined();
+  });
+});
+
 describe('GoogleProvider reminder mapping', () => {
   it('maps Google popup reminders to provider alarms', () => {
     const event = fromGoogleEvent({

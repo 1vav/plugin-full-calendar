@@ -228,9 +228,8 @@ export const EditEvent = ({
   const selectedCalendar = calendars[calendarIndex];
   const isDailyNoteCalendar = selectedCalendar.type === 'dailynote';
   const supportsProviderNotifications = Boolean(
-    PluginState.getProviderRegistry()
-      .getInstance(selectedCalendar.id)
-      ?.getCapabilities().supportsAlarms
+    PluginState.getProviderRegistry().getInstance(selectedCalendar.id)?.getCapabilities()
+      .supportsAlarms
   );
   const recurringTooltip = isDailyNoteCalendar
     ? t('modals.editEvent.tooltips.dailyNoteRecurring')

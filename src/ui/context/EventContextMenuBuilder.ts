@@ -236,7 +236,6 @@ function buildDeleteActions(
         } else {
           await PluginState.getCache().deleteEvent(context.eventId);
         }
-
       }
     }
   ];

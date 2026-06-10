@@ -260,10 +260,7 @@ export class ViewEventInteractionHandler {
         const masterDetails = PluginState.getCache()
           .store.getAllEvents()
           .find(candidate => {
-            if (
-              candidate.event.type !== 'recurring' &&
-              candidate.event.type !== 'rrule'
-            ) {
+            if (candidate.event.type !== 'recurring' && candidate.event.type !== 'rrule') {
               return false;
             }
             if (candidate.event.uid && candidate.event.uid === originalEvent.uid) {

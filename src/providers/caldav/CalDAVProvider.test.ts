@@ -933,12 +933,10 @@ END:VCALENDAR
           read: jest
             .fn()
             .mockImplementation((file: MockCalDAVCreatedFile) => Promise.resolve(file.content)),
-          modify: jest
-            .fn()
-            .mockImplementation((file: MockCalDAVCreatedFile, content: string) => {
-              file.content = content;
-              return Promise.resolve();
-            })
+          modify: jest.fn().mockImplementation((file: MockCalDAVCreatedFile, content: string) => {
+            file.content = content;
+            return Promise.resolve();
+          })
         },
         metadataCache: {
           getFileCache: jest.fn(),
@@ -1011,9 +1009,9 @@ END:VCALENDAR
         content:
           '---\nfc-event-uid: "caldav-uid-999"\ncustom: keep-me\nscheduled: 2026-04-20\nscheduled-link: [[2026-04-20]]\ndue: 2026-04-20\ndue-link: [[2026-04-20]]\n---\nBody must remain unchanged.'
       };
-      jest.spyOn(caldavProvider.linkedNoteIndex, 'getFileForEventAfterHydration').mockResolvedValue(
-        linkedFile as unknown as import('obsidian').TFile
-      );
+      jest
+        .spyOn(caldavProvider.linkedNoteIndex, 'getFileForEventAfterHydration')
+        .mockResolvedValue(linkedFile as unknown as import('obsidian').TFile);
       mockObsidianFetch.mockResolvedValueOnce({
         status: 204,
         statusText: 'No Content'

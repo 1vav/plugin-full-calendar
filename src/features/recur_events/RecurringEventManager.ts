@@ -134,7 +134,11 @@ export class RecurringEventManager {
     });
   }
 
-  private findRecurringMasterId(eventId: string, event: OFCEvent, calendarId: string): string | null {
+  private findRecurringMasterId(
+    eventId: string,
+    event: OFCEvent,
+    calendarId: string
+  ): string | null {
     if (event.type === 'recurring' || event.type === 'rrule') {
       return eventId;
     }
@@ -317,7 +321,8 @@ export class RecurringEventManager {
     const isGoogle = providerResult.provider.type === 'google';
 
     const instanceDate =
-      options?.instanceDate || (event.type === 'single' ? event.recurrenceId || event.date : undefined);
+      options?.instanceDate ||
+      (event.type === 'single' ? event.recurrenceId || event.date : undefined);
     const { DeleteRecurringModal } = await import('../../ui/modals/DeleteRecurringModal');
     new DeleteRecurringModal(
       this.cache.plugin.app,
