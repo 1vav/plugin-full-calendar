@@ -3,6 +3,7 @@ site_name: Full Calendar Remastered
 site_url: https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/
 repo_url: https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar
 repo_name: obsidian-full-calendar-remastered/plugin-full-calendar
+docs_dir: docs
 theme:
     name: material
     custom_dir: docs/overrides
@@ -62,14 +63,17 @@ markdown_extensions:
     - pymdownx.keys
     - pymdownx.caret
     - attr_list
+    - md_in_html
 
 extra_javascript:
     - assets/javascripts/nav-section-links.js
     - assets/javascripts/theme-logo.js
     - assets/javascripts/analytics-events.js
+    - assets/javascripts/showcase-modal.js
 
 extra_css:
       - assets/stylesheets/site-polish.css
+      - assets/stylesheets/showcase.css
       - assets/stylesheets/nav-section-links.css
       - assets/stylesheets/custom-footer.css
 
@@ -79,9 +83,13 @@ plugins:
           enable_creation_date: true
           type: datetime
     - git-committers:
+          enabled: !ENV [CI, false]
           repository: obsidian-full-calendar-remastered/plugin-full-calendar
           cache_dir: .cache/plugin/git-committers
           branch: main
+
+hooks:
+    - tools/generate_showcase.py
 
 extra:
     analytics:
@@ -128,6 +136,7 @@ nav:
                 - TaskNotes Integration: user/calendars/tasknotes.md
                 - ActivityWatch Integration: user/calendars/activitywatch.md
                 - Obsidian Bases Calendar: user/calendars/bases.md
+                - Holidays Calendar: user/calendars/holidays.md
           - Working with Events:
                 - user/events/index.md
                 - Event Management: user/events/manage.md
@@ -152,7 +161,11 @@ nav:
                 - Internationalization: user/features/i18n.md
                 - Link Notes to Remote Events: user/features/event-linked-notes.md
                 - Live Preview Decorators: user/features/live-preview.md
-                - Embedded Code Block Calendars: user/features/embedded_calendars.md
+                - Developer API & CLI: user/features/api.md
+          - Embedded Calendars:
+                  - user/embeds/index.md
+                  - Deep Dive Specs: user/embeds/deep_dive.md
+                  - Dashboard Showcases: user/embeds/showcase.md
           - Chrono Analyser: 
                 - user/chrono_analyser/index.md
                 - Introduction: user/chrono_analyser/introduction.md
@@ -189,6 +202,7 @@ nav:
                 - architecture/calendars/architecture.md
                 - Outlook Provider: architecture/calendars/outlook.md
                 - Tasks Integration: architecture/calendars/tasks-integration.md
+                - Task Backlog Integration: architecture/calendars/task-backlog.md
           - Events:
                 - architecture/events/architecture.md
           - Implementations:
@@ -216,6 +230,7 @@ nav:
                 - architecture/dev-logs/index.md
                 - Calendar Load Profiling Audit: architecture/dev-logs/devlog_calendar_load_profiling_2026-04-11.md
                 - RRULE Timezone Date-Shift Fix: architecture/dev-logs/devlog_rrule_timezone_patch.md
+                - Weather Forecast Integration: architecture/dev-logs/devlog_weather_integration.md
     - Reference:
           - Data Integrity and File Modifications: user/reference/data_integrity.md
           - Outbound Network Requests: user/reference/network_requests.md

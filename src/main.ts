@@ -18,18 +18,16 @@ import { NotificationManager } from './features/notifications/NotificationManage
 import { FcrReminderManager } from './features/fcr_reminder/FcrReminderManager';
 import { StatusBarManager } from './features/statusbar/StatusBarManager';
 import { LazySettingsTab } from './ui/settings/LazySettingsTab';
-import { ensureCalendarIds, migrateAndSanitizeSettings } from './ui/settings/utilsSettings';
+import { migrateAndSanitizeSettings } from './ui/settings/utilsSettings';
 import { PLUGIN_SLUG } from './types';
+import { DEPRECATED_PROVIDERS } from './ui/settings/deprecations';
 import EventCache from './core/EventCache';
 import { manageTimezone } from './features/timezone/Timezone';
-import { Plugin, TFile, App, EventRef, ButtonComponent } from 'obsidian';
+import { Plugin, TFile, App, EventRef } from 'obsidian';
 import type { Workspace } from 'obsidian';
 import { initializeI18n, t } from './features/i18n/i18n';
 import './styles.css';
-import {
-  livePreviewCoordinator,
-  livePreviewStateField
-} from './features/livepreview/LivePreviewCoordinator';
+import { livePreviewCoordinator } from './features/livepreview/LivePreviewCoordinator';
 
 import { AppWithSettings } from './types/obsidian-ext';
 import { FullCalendarSettings, DEFAULT_SETTINGS } from './types/settings';
@@ -74,6 +72,7 @@ export default class FullCalendarPlugin extends Plugin {
 
   // Keep a snapshot of the last saved settings to detect changes reliable
   #loadedSettings: string = '';
+  #localServer: import('./api/LocalServer').LocalServer | null = null;
 
   loadData(): Promise<unknown> {
     return Promise.reject(
@@ -91,31 +90,9 @@ export default class FullCalendarPlugin extends Plugin {
    * Plugin load lifecycle method.
    * This method is called when the plugin is enabled.
    * It initializes settings, sets up the EventCache, registers the calendar
-   * and sidebar views, adds the ribbon icon and commands, and sets up
    * listeners for Vault file changes (create, rename, delete).
    */
   async onload() {
-    // Polyfill ButtonComponent prototype for backwards compatibility with older Obsidian versions (pre-1.13.0)
-    if (
-      typeof ButtonComponent !== 'undefined' &&
-      typeof ButtonComponent.prototype !== 'undefined'
-    ) {
-      if (!ButtonComponent.prototype.setDestructive) {
-        interface LegacyButton {
-          setWarning(): ButtonComponent;
-        }
-        ButtonComponent.prototype.setDestructive = function (this: ButtonComponent) {
-          return (this as unknown as LegacyButton).setWarning();
-        };
-      }
-      if (!ButtonComponent.prototype.removeDestructive) {
-        ButtonComponent.prototype.removeDestructive = function (this: ButtonComponent) {
-          this.buttonEl.classList.remove('mod-warning');
-          return this;
-        };
-      }
-    }
-
     // Initialize i18n system first, before any UI is rendered
     await initializeI18n(this.app, this.manifest.id);
 
@@ -171,6 +148,7 @@ export default class FullCalendarPlugin extends Plugin {
     PluginState.getProviderRegistry().registerBuiltInProviders();
 
     await this.#loadSettings(); // This now handles setting and syncing
+    await this.#setupLocalServer();
 
     await PluginState.getProviderRegistry().initializeInstances();
 
@@ -237,6 +215,17 @@ export default class FullCalendarPlugin extends Plugin {
     this.registerEvent(
       this.app.metadataCache.on('changed', file => {
         void PluginState.getProviderRegistry().handleFileUpdate(file);
+
+        // If the modified file is the active workspace's Bases query file, trigger cache resync to reload it
+        const activeWorkspaceId = PluginState.getSettings().activeWorkspace;
+        if (activeWorkspaceId) {
+          const activeWorkspace = PluginState.getSettings().workspaces.find(
+            w => w.id === activeWorkspaceId
+          );
+          if (activeWorkspace && activeWorkspace.basisQueryPath === file.path) {
+            PluginState.getCache().resync();
+          }
+        }
       })
     );
     this.registerEvent(
@@ -423,7 +412,6 @@ export default class FullCalendarPlugin extends Plugin {
       }
     });
 
-    this.registerEditorExtension(livePreviewStateField);
     this.registerEditorExtension(livePreviewCoordinator);
 
     // Register embedded calendar markdown code block processor
@@ -450,6 +438,9 @@ export default class FullCalendarPlugin extends Plugin {
    */
   onunload() {
     this.#clearActivityWatchAutoSync();
+    if (this.#localServer) {
+      void this.#localServer.stop();
+    }
     if (this.#notificationManager) {
       this.#notificationManager.unload();
     }
@@ -489,6 +480,28 @@ export default class FullCalendarPlugin extends Plugin {
     // Check if we need to show the changelog
     const { checkAndShowWhatsNew } = await import('./ui/settings/changelogs/renderWhatsNew');
     checkAndShowWhatsNew(this);
+
+    // Check for deprecated provider types in calendar sources
+    const deprecatedItems: import('./ui/modals/DeprecationWarningModal').DeprecatedSourceItem[] =
+      [];
+    const sources = migratedSettings.calendarSources || [];
+    for (const source of sources) {
+      if (source.type in DEPRECATED_PROVIDERS) {
+        const info = DEPRECATED_PROVIDERS[source.type];
+        deprecatedItems.push({
+          name: source.name || 'Unnamed',
+          typeName: info.displayName,
+          message: info.message
+        });
+      }
+    }
+
+    if (deprecatedItems.length > 0) {
+      this.app.workspace.onLayoutReady(async () => {
+        const { DeprecationWarningModal } = await import('./ui/modals/DeprecationWarningModal');
+        new DeprecationWarningModal(this.app, deprecatedItems).open();
+      });
+    }
   }
 
   /**
@@ -505,12 +518,12 @@ export default class FullCalendarPlugin extends Plugin {
     // Create a mutable copy to work with.
     const newSettings = { ...PluginState.getSettings() };
 
-    // Sanitize calendar sources before saving to ensure all have IDs.
-    const { sources } = ensureCalendarIds(newSettings.calendarSources);
-    newSettings.calendarSources = sources;
+    // Run the migration and sanitization pipeline to ensure credentials are migrated
+    // and IDs are present before saving to disk.
+    const { settings: migratedSettings } = migrateAndSanitizeSettings(newSettings);
 
     // Now, assign the fully-corrected settings object in one go.
-    PluginState.setSettings(newSettings);
+    PluginState.setSettings(migratedSettings);
 
     await super.saveData(PluginState.getSettings());
 
@@ -552,11 +565,7 @@ export default class FullCalendarPlugin extends Plugin {
     // Update the snapshot
     this.#loadedSettings = newSettingsString;
     this.#setupActivityWatchAutoSync();
-
-    // This manual call is now redundant and will be removed.
-    // if (this.notificationManager) {
-    //   this.notificationManager.update(PluginState.getSettings());
-    // }
+    await this.#setupLocalServer();
   }
 
   async #persistData() {
@@ -654,5 +663,29 @@ export default class FullCalendarPlugin extends Plugin {
 
       processBatch();
     });
+  }
+
+  async #setupLocalServer(): Promise<void> {
+    if (PluginState.isMobile()) {
+      return;
+    }
+    const settings = PluginState.getSettings();
+    if (this.#localServer) {
+      if (!settings.enableLocalServer || this.#localServer.port !== settings.localServerPort) {
+        await this.#localServer.stop();
+        this.#localServer = null;
+      }
+    }
+    if (settings.enableLocalServer && !this.#localServer) {
+      const { LocalServer } = await import('./api/LocalServer');
+      this.#localServer = new LocalServer(this.api, settings.localServerPort);
+      try {
+        await this.#localServer.start();
+      } catch (err: unknown) {
+        const errorObj = err as Error;
+        showNotice(`Full Calendar REST server failed to start: ${errorObj.message || String(err)}`);
+        this.#localServer = null;
+      }
+    }
   }
 }

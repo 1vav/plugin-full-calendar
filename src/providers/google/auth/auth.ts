@@ -1,4 +1,5 @@
 import { showNotice } from '../../../utils/showNotice';
+import { openExternalUrl } from '../../../utils/openExternalUrl';
 /**
  * @file auth.ts
  * @brief Handles all OAuth 2.0 logic for Google Calendar integration.
@@ -16,6 +17,9 @@ import FullCalendarPlugin from '../../../main';
 import { GoogleAuthManager } from './GoogleAuthManager';
 import { t } from '../../../features/i18n/i18n';
 import { PluginState } from '../../../core/PluginState';
+import { CopyTextModal } from '../../../ui/modals/CopyTextModal';
+import { LoadingModal } from '../../../ui/modals/LoadingModal';
+import { CredentialStore } from '../../../features/credentials/CredentialStore';
 
 // =================================================================================================
 // CONSTANTS
@@ -49,8 +53,29 @@ type DesktopUrlModule = {
   parse: (input: string, parseQueryString?: boolean) => { query?: Record<string, unknown> };
 };
 
-let pkce: { verifier: string; state: string } | null = null;
-let server: DesktopServer | null = null;
+interface GlobalAuthState {
+  pkce: { verifier: string; state: string } | null;
+  server: DesktopServer | null;
+  waitingModal: LoadingModal | null;
+}
+
+interface ExtendedWindow extends Window {
+  _ofcGoogleAuthState?: GlobalAuthState;
+}
+
+function getGlobalAuthState(): GlobalAuthState {
+  const g = window as ExtendedWindow;
+  if (!g._ofcGoogleAuthState) {
+    g._ofcGoogleAuthState = {
+      pkce: null,
+      server: null,
+      waitingModal: null
+    };
+  }
+  return g._ofcGoogleAuthState;
+}
+
+const oauthState = getGlobalAuthState();
 
 // =================================================================================================
 // PKCE HELPER FUNCTIONS
@@ -83,14 +108,66 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
   return base64urlencode(hashed);
 }
 
+function showAuthUI(
+  plugin: FullCalendarPlugin,
+  authUrl: string,
+  useCopyPaste: boolean,
+  isMobile: boolean
+): void {
+  if (useCopyPaste) {
+    new CopyTextModal(plugin.app, {
+      titleText: t('google.auth.copyModalTitle'),
+      descriptionText: t('google.auth.copyModalDesc'),
+      valueToCopy: authUrl,
+      copyButtonLabel: t('google.auth.copyModalCopyButton'),
+      copiedButtonLabel: t('google.auth.copyModalCopiedButton'),
+      closeButtonLabel: t('google.auth.copyModalCloseButton'),
+      onCloseCallback: () => {
+        const onCancel = isMobile
+          ? () => {
+              oauthState.pkce = null;
+              oauthState.waitingModal = null;
+            }
+          : () => {
+              if (oauthState.server) {
+                try {
+                  oauthState.server.close();
+                } catch (e) {
+                  console.error('Error closing Google Auth server on cancel:', e);
+                }
+                oauthState.server = null;
+              }
+              oauthState.waitingModal = null;
+            };
+
+        // If desktop and server was already closed by the callback, don't open the waiting modal
+        if (!isMobile && !oauthState.server) {
+          return;
+        }
+
+        oauthState.waitingModal = new LoadingModal(plugin.app, {
+          titleText: t('google.auth.waitingModalTitle'),
+          descriptionText: t('google.auth.waitingModalDesc'),
+          cancelLabel: t('google.auth.waitingModalCancel'),
+          onCancel
+        });
+        oauthState.waitingModal.open();
+      }
+    }).open();
+  } else {
+    openExternalUrl(authUrl);
+  }
+}
+
 function startDesktopLogin(plugin: FullCalendarPlugin, authUrl: string): void {
   const http = window.require('http') as DesktopHttpModule;
   const url = window.require('url') as DesktopUrlModule;
-  if (server) {
-    window.open(authUrl);
+  const useCopyPaste = PluginState.getSettings().googleUseCopyPasteAuth;
+  if (oauthState.server) {
+    showAuthUI(plugin, authUrl, useCopyPaste, false);
     return;
   }
-  server = http.createServer(
+  oauthState.server = http.createServer(
     (
       req: { url?: string },
       res: { writeHead: (status: number) => void; end: (body?: string) => void }
@@ -114,9 +191,9 @@ function startDesktopLogin(plugin: FullCalendarPlugin, authUrl: string): void {
 
           res.end('Authentication successful! Please return to Obsidian.');
 
-          if (server) {
-            server.close();
-            server = null;
+          if (oauthState.server) {
+            oauthState.server.close();
+            oauthState.server = null;
           }
 
           await exchangeCodeForToken(code, state, plugin);
@@ -125,16 +202,23 @@ function startDesktopLogin(plugin: FullCalendarPlugin, authUrl: string): void {
         } catch (e) {
           console.error('Error handling Google Auth callback:', e);
           res.end('Authentication failed. Please check the console in Obsidian and try again.');
-          if (server) {
-            server.close();
-            server = null;
+
+          const modalToClose = oauthState.waitingModal;
+          oauthState.waitingModal = null;
+          if (modalToClose) {
+            modalToClose.closeSuccess();
+          }
+
+          if (oauthState.server) {
+            oauthState.server.close();
+            oauthState.server = null;
           }
         }
       })();
     }
   );
-  server.listen(42813, () => {
-    window.open(authUrl);
+  oauthState.server.listen(42813, () => {
+    showAuthUI(plugin, authUrl, useCopyPaste, false);
   });
 }
 
@@ -151,11 +235,12 @@ export async function startGoogleLogin(
 ): Promise<void> {
   const settings = PluginState.getSettings();
   const isMobile = Platform.isMobile;
+  const useCopyPaste = settings.googleUseCopyPasteAuth;
 
   // For mobile: Open window FIRST (synchronously) to avoid iOS popup blocker.
   // iOS requires window.open() to be called in the same event loop tick as the user action.
   let mobileWindow: Window | null = null;
-  if (isMobile) {
+  if (isMobile && !useCopyPaste) {
     mobileWindow = window.open('about:blank', '_blank');
     if (!mobileWindow) {
       showNotice(t('google.auth.popupBlocked'));
@@ -169,12 +254,15 @@ export async function startGoogleLogin(
   const challenge = await generateCodeChallenge(verifier);
 
   // Store the verifier and state to be used in the callback.
-  pkce = { verifier, state };
+  oauthState.pkce = { verifier, state };
 
   const clientId = settings.useCustomGoogleClient ? settings.googleClientId : PUBLIC_CLIENT_ID;
   const redirectUri = isMobile ? MOBILE_REDIRECT_URI : DESKTOP_REDIRECT_URI;
 
-  if (settings.useCustomGoogleClient && (!clientId || !settings.googleClientSecret)) {
+  const clientSecret = settings.useCustomGoogleClient
+    ? CredentialStore.getGoogleClientSecret()
+    : '';
+  if (settings.useCustomGoogleClient && (!clientId || !clientSecret)) {
     showNotice(t('google.auth.customCredsMissing'));
     // Close the mobile window if we opened one
     if (mobileWindow) {
@@ -198,7 +286,13 @@ export async function startGoogleLogin(
   });
 
   const authUrl = `${AUTH_URL}?${params.toString()}`;
-  if (isMobile && mobileWindow) {
+  if (useCopyPaste) {
+    if (isMobile) {
+      showAuthUI(plugin, authUrl, true, true);
+    } else {
+      startDesktopLogin(plugin, authUrl);
+    }
+  } else if (isMobile && mobileWindow) {
     // Redirect the already-open window to the OAuth URL
     mobileWindow.location.href = authUrl;
   } else {
@@ -211,7 +305,12 @@ export async function exchangeCodeForToken(
   state: string,
   plugin: FullCalendarPlugin
 ): Promise<void> {
-  if (!pkce || state !== pkce.state) {
+  if (!oauthState.pkce || state !== oauthState.pkce.state) {
+    const modalToClose = oauthState.waitingModal;
+    oauthState.waitingModal = null;
+    if (modalToClose) {
+      modalToClose.closeSuccess();
+    }
     showNotice(t('google.auth.stateMismatch'));
     console.error('State mismatch during OAuth callback.');
     return;
@@ -229,13 +328,16 @@ export async function exchangeCodeForToken(
   if (settings.useCustomGoogleClient) {
     // Legacy path: User provides their own credentials, talk to Google directly.
     tokenUrl = GOOGLE_TOKEN_URL;
+    const clientSecret = settings.useCustomGoogleClient
+      ? CredentialStore.getGoogleClientSecret()
+      : '';
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: clientId,
       code: code,
-      code_verifier: pkce.verifier,
+      code_verifier: oauthState.pkce.verifier,
       redirect_uri: redirectUri,
-      client_secret: settings.googleClientSecret
+      client_secret: clientSecret
     });
     requestBody = body.toString();
     requestHeaders = { 'Content-Type': 'application/x-www-form-urlencoded' };
@@ -245,7 +347,7 @@ export async function exchangeCodeForToken(
     const body = {
       client_id: clientId,
       code: code,
-      code_verifier: pkce.verifier,
+      code_verifier: oauthState.pkce.verifier,
       state: state
     };
     requestBody = JSON.stringify(body);
@@ -296,6 +398,11 @@ export async function exchangeCodeForToken(
       console.error('An unknown error occurred during token exchange:', e);
     }
   } finally {
-    pkce = null;
+    oauthState.pkce = null;
+    const modalToClose = oauthState.waitingModal;
+    oauthState.waitingModal = null;
+    if (modalToClose) {
+      modalToClose.closeSuccess();
+    }
   }
 }

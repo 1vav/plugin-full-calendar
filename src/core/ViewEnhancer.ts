@@ -38,6 +38,10 @@ export class ViewEnhancer {
     this.workspaceManager.updateSettings(newSettings);
   }
 
+  public async loadBasesFilter(): Promise<void> {
+    await this.workspaceManager.loadBasesFilter();
+  }
+
   /**
    * The main enhancement pipeline.
    * Takes raw sources from the cache and returns the final, filtered, and
@@ -65,6 +69,13 @@ export class ViewEnhancer {
    */
   public getFilteredSources(allSources: OFCEventSource[]): OFCEventSource[] {
     return this.workspaceManager.filterCalendarSources(allSources);
+  }
+
+  /**
+   * Gets the resolved workspace configuration (overrides merged on top of global settings).
+   */
+  public getCalendarConfig(): Partial<FullCalendarSettings> {
+    return this.workspaceManager.getCalendarConfig();
   }
 
   /**

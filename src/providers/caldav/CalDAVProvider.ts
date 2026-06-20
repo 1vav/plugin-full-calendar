@@ -19,6 +19,7 @@ import { obsidianFetch } from './obsidian-fetch_caldav';
 import { createBasicAuthHeader } from './auth_caldav';
 import { LinkedNoteIndex } from '../utils/LinkedNoteIndex';
 import { TFile } from 'obsidian';
+import { CredentialStore } from '../../features/credentials/CredentialStore';
 import {
   createLinkedNoteForProvider,
   openOrCreateLinkedNote
@@ -912,6 +913,10 @@ export class CalDAVProvider
     this.linkedNoteIndex = new LinkedNoteIndex(plugin.app, source.id);
   }
 
+  private getPassword(): string | null {
+    return CredentialStore.getCalDAVPassword(this.source.id);
+  }
+
   initialize(): void {
     this.linkedNoteIndex.initialize();
   }
@@ -1020,7 +1025,7 @@ export class CalDAVProvider
     // Validate collection URL using PROPFIND instead of regex
     const { isCalendar: isValid } = await fetchCalendarInfo(this.source.homeUrl, {
       username: this.source.username,
-      password: this.source.password
+      password: this.getPassword() ?? undefined
     });
 
     if (!isValid) {
@@ -1049,7 +1054,7 @@ export class CalDAVProvider
         start,
         end,
         this.source.username,
-        this.source.password
+        this.getPassword() ?? undefined
       );
       const parsedEvents: OFCEvent[] = [];
       let parseFailures = 0;
@@ -1087,14 +1092,14 @@ export class CalDAVProvider
     } catch (err) {
       console.error('[CalDAVProvider] Failed to fetch events.', err);
       const errorMessage = err instanceof Error ? err.message : String(err);
-      throw new Error(`Failed to fetch events from CalDAV server: ${errorMessage}`);
+      throw new Error(`Failed to fetch events from CalDAV server: ${errorMessage}`, { cause: err });
     }
   }
 
   private async loadUndatedTasksFromRemote(): Promise<CalDAVTaskInboxItem[]> {
     const { isCalendar: isValid } = await fetchCalendarInfo(this.source.homeUrl, {
       username: this.source.username,
-      password: this.source.password
+      password: this.getPassword() ?? undefined
     });
 
     if (!isValid) {
@@ -1103,7 +1108,7 @@ export class CalDAVProvider
       );
     }
 
-    const authHeader = createBasicAuthHeader(this.source.username, this.source.password);
+    const authHeader = createBasicAuthHeader(this.source.username, this.getPassword() ?? undefined);
     const objects = await fetchAllVTodoObjects(this.source.homeUrl, authHeader);
     return objects.flatMap(object =>
       parseUnscheduledTasksFromObject(object, this.source.id, this.source.name)
@@ -1176,7 +1181,7 @@ export class CalDAVProvider
       taskUid = parsed.uid;
     }
 
-    const authHeader = createBasicAuthHeader(this.source.username, this.source.password);
+    const authHeader = createBasicAuthHeader(this.source.username, this.getPassword() ?? undefined);
     const objects = await fetchCalendarObjectsViaPropfindFallback(this.source.homeUrl, authHeader);
 
     for (const object of objects) {
@@ -1404,7 +1409,7 @@ export class CalDAVProvider
       }
       taskUid = parsed.uid;
     }
-    const authHeader = createBasicAuthHeader(this.source.username, this.source.password);
+    const authHeader = createBasicAuthHeader(this.source.username, this.getPassword() ?? undefined);
     const objects = await fetchCalendarObjectsViaPropfindFallback(this.source.homeUrl, authHeader);
 
     for (const object of objects) {
@@ -1474,7 +1479,7 @@ export class CalDAVProvider
       }
       taskUid = parsed.uid;
     }
-    const authHeader = createBasicAuthHeader(this.source.username, this.source.password);
+    const authHeader = createBasicAuthHeader(this.source.username, this.getPassword() ?? undefined);
     const objects = await fetchCalendarObjectsViaPropfindFallback(this.source.homeUrl, authHeader);
 
     for (const object of objects) {
@@ -1534,7 +1539,7 @@ export class CalDAVProvider
     // Fetch existing
     // We need to fetch the raw text of the ICS file.
     const headers: Record<string, string> = {};
-    const authHeader = createBasicAuthHeader(this.source.username, this.source.password);
+    const authHeader = createBasicAuthHeader(this.source.username, this.getPassword() ?? undefined);
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
@@ -1587,7 +1592,7 @@ export class CalDAVProvider
 
   private async fetchVCalendar(url: string): Promise<ical.Component> {
     const headers: Record<string, string> = {};
-    const authHeader = createBasicAuthHeader(this.source.username, this.source.password);
+    const authHeader = createBasicAuthHeader(this.source.username, this.getPassword() ?? undefined);
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
@@ -1654,7 +1659,7 @@ export class CalDAVProvider
   // Helper to attach auth and fetch
   private async doRequest(url: string, options: RequestInit) {
     const headers = (options.headers as Record<string, string>) || {};
-    const authHeader = createBasicAuthHeader(this.source.username, this.source.password);
+    const authHeader = createBasicAuthHeader(this.source.username, this.getPassword() ?? undefined);
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }

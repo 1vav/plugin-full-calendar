@@ -1,26 +1,11 @@
-import { App, TFile, Component, parseYaml, MarkdownRenderChild } from 'obsidian';
-import {
-  Calendar,
-  EventSourceInput,
-  EventClickArg,
-  EventApi,
-  EventInput
-} from '@fullcalendar/core';
-import { getDateFromFile } from 'obsidian-daily-notes-interface';
+import { App, Component, parseYaml, MarkdownRenderChild } from 'obsidian';
+import { Calendar, EventSourceInput, EventClickArg, EventApi } from '@fullcalendar/core';
 import FullCalendarPlugin from '../../main';
 import { PluginState } from '../../core/PluginState';
-import {
-  EventFilterSortEngine,
-  QueryableEvent,
-  EventFilterCriteria,
-  EventSortCriteria
-} from '../../core/EventFilterSortEngine';
-import { DateTime } from 'luxon';
 import { ViewContext } from '../../ui/calendar/ViewContext';
 import { ViewEnhancer } from '../../core/ViewEnhancer';
 import { ViewEventInteractionHandler } from '../../ui/calendar/ViewEventInteractionHandler';
 import { renderCalendar } from '../../ui/settings/sections/calendars/calendar';
-import { OFCEvent } from '../../types';
 import { VIEW_ZOOM_CONFIG } from '../../ui/calendar/ViewZoomHandler';
 import { ViewTimelineHandler } from '../../ui/calendar/ViewTimelineHandler';
 import {
@@ -30,29 +15,13 @@ import {
   EmbeddedBlockRegistry
 } from './EmbeddedBlockRegistry';
 
-export function parseRelativeOffset(offsetStr: string, baseDate: DateTime): DateTime {
-  const match = offsetStr.trim().match(/^([+-]?\d+)\s*([dwmy])$/);
-  if (!match) return baseDate;
+import './codeblock.css';
 
-  const value = parseInt(match[1], 10);
-  const unit = match[2];
-
-  switch (unit) {
-    case 'd':
-      return baseDate.plus({ days: value });
-    case 'w':
-      return baseDate.plus({ weeks: value });
-    case 'm':
-      return baseDate.plus({ months: value });
-    case 'y':
-      return baseDate.plus({ years: value });
-    default:
-      return baseDate;
-  }
-}
-
-interface ViewConfig {
+export interface ViewConfig {
   view?: string;
+  type?: string;
+  orientation?: 'horizontal' | 'vertical';
+  variant?: 'minimal' | 'default';
   height?: string;
   width?: string;
   defaultDate?: string;
@@ -76,14 +45,55 @@ interface ViewConfig {
   slotDuration?: string;
   slotLabelInterval?: string;
   styles?: Record<string, string>;
+  weather?: boolean;
+  stickyHeader?: boolean;
 }
 
-interface CodeBlockConfig extends ViewConfig {
+export interface CodeBlockConfig extends ViewConfig {
   orientation?: 'horizontal' | 'vertical';
   layout?: {
     orientation?: 'horizontal' | 'vertical';
     views: ViewConfig[];
   };
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function sanitizeEmbeddedConfigValue(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length === 0 ? undefined : value;
+  }
+
+  if (Array.isArray(value)) {
+    const sanitizedItems = value
+      .map(item => sanitizeEmbeddedConfigValue(item))
+      .filter((item): item is NonNullable<typeof item> => item !== undefined);
+    return sanitizedItems.length > 0 ? sanitizedItems : undefined;
+  }
+
+  if (isPlainRecord(value)) {
+    const sanitizedObject: Record<string, unknown> = {};
+    for (const [key, innerValue] of Object.entries(value)) {
+      const sanitizedValue = sanitizeEmbeddedConfigValue(innerValue);
+      if (sanitizedValue !== undefined) {
+        sanitizedObject[key] = sanitizedValue;
+      }
+    }
+    return Object.keys(sanitizedObject).length > 0 ? sanitizedObject : undefined;
+  }
+
+  return value;
+}
+
+export function sanitizeEmbeddedConfig(config: Record<string, unknown>): Record<string, unknown> {
+  const sanitized = sanitizeEmbeddedConfigValue(config);
+  return isPlainRecord(sanitized) ? sanitized : {};
 }
 
 export class EmbeddedCalendar extends Component implements ViewContext {
@@ -100,6 +110,7 @@ export class EmbeddedCalendar extends Component implements ViewContext {
   private interactionHandler: ViewEventInteractionHandler;
   private timelineHandler: ViewTimelineHandler;
   private callback: (() => void) | null = null;
+  private resizeObservers: ResizeObserver[] = [];
 
   constructor(
     plugin: FullCalendarPlugin,
@@ -116,8 +127,10 @@ export class EmbeddedCalendar extends Component implements ViewContext {
     this.interactionHandler = new ViewEventInteractionHandler(this);
     this.timelineHandler = new ViewTimelineHandler(this);
 
+    // Create shell wrapper to inherit overrides and prevent style leakage at the root
+    const shellEl = containerEl.createDiv({ cls: 'ofc-calendar-shell' });
     // Create container
-    this.contentEl = containerEl.createDiv({ cls: 'ofc-embedded-calendar-container' });
+    this.contentEl = shellEl.createDiv({ cls: 'ofc-embedded-calendar-container' });
   }
 
   onload(): void {
@@ -128,6 +141,8 @@ export class EmbeddedCalendar extends Component implements ViewContext {
     this.calendars.forEach(cal => cal.destroy());
     this.calendars = [];
     this.activeCalendar = null;
+    this.resizeObservers.forEach(obs => obs.disconnect());
+    this.resizeObservers = [];
     if (this.callback) {
       this.callback = null;
     }
@@ -138,6 +153,7 @@ export class EmbeddedCalendar extends Component implements ViewContext {
   }
 
   get viewEnhancer(): ViewEnhancer | null {
+    this.enhancerInstance.updateSettings(PluginState.getSettings());
     return this.enhancerInstance;
   }
 
@@ -161,6 +177,7 @@ export class EmbeddedCalendar extends Component implements ViewContext {
         height: this.config.height === 'fit' ? 'auto' : this.config.height
       });
     }
+
     await this.renderSingleCalendar(this.contentEl, this.config);
 
     // Keep reactive to cache updates
@@ -184,22 +201,7 @@ export class EmbeddedCalendar extends Component implements ViewContext {
       }
     }
 
-    let initialDate: string | undefined = undefined;
-    if (config.defaultDate === 'auto') {
-      const file = this.app.vault.getAbstractFileByPath(this.widgetCtx.sourcePath);
-      if (file instanceof TFile) {
-        const dailyNoteDate = getDateFromFile(file, 'day');
-        if (dailyNoteDate) {
-          initialDate = dailyNoteDate.format('YYYY-MM-DD');
-        }
-      }
-    } else if (config.defaultDate === 'today') {
-      initialDate = new Date().toISOString().split('T')[0];
-    } else if (config.defaultDate) {
-      initialDate = config.defaultDate;
-    }
-
-    const { sources } = this.getSourcesAndConfig(config);
+    const { sources, initialDate } = this.getSourcesAndConfig(config);
 
     let slotDuration = config.slotDuration;
     let slotLabelInterval = config.slotLabelInterval;
@@ -245,6 +247,8 @@ export class EmbeddedCalendar extends Component implements ViewContext {
       dayMaxEvents: true,
       headerToolbar: config.header === false ? false : undefined,
       footerToolbar: config.header === false ? false : undefined,
+      timeGridDayHeaderFormat: PluginState.getSettings().timeGridDayHeaderFormat,
+      weatherHide: config.weather === false,
       ...(slotDuration !== undefined && { slotDuration }),
       ...(slotLabelInterval !== undefined && { slotLabelInterval }),
       ...(isTimelineView && { enableAdvancedCategorization: true }),
@@ -283,155 +287,14 @@ export class EmbeddedCalendar extends Component implements ViewContext {
       cal.updateSize();
     });
     resizeObserver.observe(el);
+    this.resizeObservers.push(resizeObserver);
   }
 
-  private getSourcesAndConfig(config: ViewConfig): { sources: EventSourceInput[] } {
-    this.enhancerInstance.updateSettings(PluginState.getSettings());
-    const allCachedSources = PluginState.getCache().getAllEvents();
-    const { sources } = this.enhancerInstance.getEnhancedData(allCachedSources);
-
-    let filteredSources = sources;
-    if (config.calendars && config.calendars.length > 0) {
-      filteredSources = sources.filter(s => {
-        const sId = typeof s === 'object' && s !== null && 'id' in s ? (s.id as string) : '';
-        return config.calendars?.includes(sId);
-      });
-    }
-
-    // Parse Date Range Offsets
-    let baseDate = DateTime.now().startOf('day');
-    if (config.defaultDate === 'today') {
-      baseDate = DateTime.now().startOf('day');
-    } else if (config.defaultDate && config.defaultDate !== 'auto') {
-      const parsed = DateTime.fromISO(config.defaultDate);
-      if (parsed.isValid) baseDate = parsed.startOf('day');
-    } else {
-      const file = this.app.vault.getAbstractFileByPath(this.widgetCtx.sourcePath);
-      if (file instanceof TFile) {
-        const dailyNoteDate = getDateFromFile(file, 'day');
-        if (dailyNoteDate) {
-          const parsed = DateTime.fromISO(dailyNoteDate.format('YYYY-MM-DD'));
-          if (parsed.isValid) baseDate = parsed.startOf('day');
-        }
-      }
-    }
-
-    let startMillis: number | undefined;
-    let endMillis: number | undefined;
-    if (config.startOffset) {
-      startMillis = parseRelativeOffset(config.startOffset, baseDate).toMillis();
-    }
-    if (config.endOffset) {
-      endMillis = parseRelativeOffset(config.endOffset, baseDate).endOf('day').toMillis();
-    }
-
-    // Build central criteria
-    const criteria: EventFilterCriteria = {
-      calendarIds: config.calendars,
-      categories: config.categories,
-      subCategories: config.subCategories,
-      isCompleted: config.completed,
-      isTask: config.isTask,
-      excludeAllDayTasks: config.excludeAllDayTasks,
-      ...(config.pathFilter && { filePathSubstring: config.pathFilter }),
-      ...(config.tagFilter && { tags: [config.tagFilter] }),
-      ...((startMillis !== undefined || endMillis !== undefined) && {
-        dateRange: { startMillis, endMillis }
-      }),
-      ...(config.textSearch && {
-        textSearch: { query: config.textSearch, mode: 'default' }
-      })
-    };
-
-    // Build sort criteria
-    const sorts: EventSortCriteria[] = [];
-    if (config.sortBy) {
-      sorts.push({
-        field: config.sortBy,
-        order: config.sortOrder || 'asc'
-      });
-    }
-
-    // Apply advanced filters and sorts using the engine
-    filteredSources = filteredSources.map(s => {
-      if (typeof s === 'object' && s !== null && 'events' in s && Array.isArray(s.events)) {
-        const queryables = s.events
-          .map((item: EventInput) => {
-            const eItem = item as unknown as { event: OFCEvent; id: string };
-            const ofcEvent = eItem.event;
-            if (!ofcEvent) return null;
-
-            const details = PluginState.getCache().store.getEventDetails(eItem.id);
-            const q = EventFilterSortEngine.fromStoredEvent(
-              details || {
-                id: eItem.id,
-                event: ofcEvent,
-                location: null,
-                calendarId: typeof s === 'object' && 'id' in s ? (s.id as string) : ''
-              }
-            );
-            // Attach reference to item for rebuilding
-            q.rawEvent = item;
-            return q;
-          })
-          .filter((q): q is QueryableEvent => q !== null);
-
-        // Run engine query
-        let queried = EventFilterSortEngine.query(queryables, criteria, sorts);
-
-        // Apply custom titleFilter substring check if defined
-        const titleFilter = config.titleFilter;
-        if (titleFilter) {
-          queried = queried.filter(q => q.title.toLowerCase().includes(titleFilter.toLowerCase()));
-        }
-
-        // Map back to EventInput elements
-        const filteredEvents = queried.map(q => q.rawEvent as EventInput);
-
-        return {
-          ...s,
-          events: filteredEvents
-        };
-      }
-      return s;
-    });
-
-    // Add shadow events for subcategories if this is a timeline view so they show up on the parent category rows too.
-    const isTimelineView =
-      config.view?.includes('resourceTimeline') || config.view?.includes('Timeline') || false;
-    if (isTimelineView && PluginState.getSettings().enableAdvancedCategorization) {
-      filteredSources = filteredSources.map(s => {
-        if (typeof s === 'object' && s !== null && 'events' in s && Array.isArray(s.events)) {
-          const shadowEvents: EventInput[] = [];
-          for (const event of s.events) {
-            if (typeof event.resourceId === 'string' && event.resourceId.includes('::')) {
-              const parentCategory = event.resourceId.split('::')[0];
-              shadowEvents.push({
-                ...event,
-                id: `${event.id}-shadow`,
-                resourceId: parentCategory,
-                extendedProps: {
-                  ...event.extendedProps,
-                  isShadow: true,
-                  originalEventId: event.id
-                },
-                className: 'fc-event-shadow',
-                editable: false,
-                durationEditable: false,
-                startEditable: false
-              });
-            }
-          }
-          return {
-            ...s,
-            events: [...s.events, ...shadowEvents]
-          };
-        }
-        return s;
-      });
-    }
-
-    return { sources: filteredSources };
+  private getSourcesAndConfig(config: ViewConfig): {
+    sources: EventSourceInput[];
+    initialDate?: string;
+  } {
+    return PluginState.getInternalAPI().getEventSources(config, this.widgetCtx.sourcePath);
   }
 
   public async refreshView(): Promise<void> {
@@ -469,224 +332,304 @@ export class CalendarWidgetStrategy implements EmbeddedWidgetStrategy {
   }
 }
 
+export function resolveStrategy(config: Record<string, unknown>): string {
+  // 1. Check if an explicit widget or type is requested
+  const typeVal = config.type || config.widget;
+  if (typeof typeVal === 'string') {
+    const t = typeVal.toLowerCase();
+    if (t === 'calendar') return 'calendar';
+    if (t === 'weather') return 'weather';
+    if (t === 'analysis' || t === 'chart') return 'analysis';
+    if (t === 'backlog' || t === 'task-backlog') return 'backlog';
+  }
+
+  // 2. Check for legacy weather config parameter `view: weather`
+  if (config.view === 'weather') {
+    return 'weather';
+  }
+
+  return 'calendar';
+}
+
+export async function getOrLoadStrategy(
+  strategyName: string,
+  plugin: FullCalendarPlugin
+): Promise<EmbeddedWidgetStrategy | null> {
+  const strategy = EmbeddedBlockRegistry.get(strategyName);
+  if (strategy) {
+    return strategy;
+  }
+
+  if (strategyName === 'analysis') {
+    try {
+      const { registerChronoAnalysisStrategy } =
+        await import('../../chrono_analyser/AnalysisWidgetStrategy');
+      registerChronoAnalysisStrategy(plugin);
+      return EmbeddedBlockRegistry.get('analysis') || null;
+    } catch (e) {
+      console.error('Failed to lazy load AnalysisWidgetStrategy:', e);
+      return null;
+    }
+  }
+
+  if (strategyName === 'weather') {
+    try {
+      const { registerWeatherStrategy } = await import('./WeatherWidgetStrategy');
+      registerWeatherStrategy(plugin);
+      return EmbeddedBlockRegistry.get('weather') || null;
+    } catch (e) {
+      console.error('Failed to lazy load WeatherWidgetStrategy:', e);
+      return null;
+    }
+  }
+
+  if (strategyName === 'backlog') {
+    try {
+      const { registerBacklogStrategy } = await import('./BacklogWidgetStrategy');
+      registerBacklogStrategy(plugin);
+      return EmbeddedBlockRegistry.get('backlog') || null;
+    } catch (e) {
+      console.error('Failed to lazy load BacklogWidgetStrategy:', e);
+      return null;
+    }
+  }
+
+  return null;
+}
+
 export function registerCodeBlockProcessor(plugin: FullCalendarPlugin) {
-  // Re-instantiate calendar strategy with full plugin context
-  EmbeddedBlockRegistry.register('fc-calendar', new CalendarWidgetStrategy(plugin));
+  // Register unified calendar strategy
+  EmbeddedBlockRegistry.register('calendar', new CalendarWidgetStrategy(plugin));
 
-  const registerProcessor = (blockType: string) => {
-    plugin.registerMarkdownCodeBlockProcessor(blockType, async (source, el, ctx) => {
-      const container = el.createDiv({
-        cls: `ofc-embedded-widget-container ofc-embed-${blockType}`
+  plugin.registerMarkdownCodeBlockProcessor('fc-calendar', async (source, el, ctx) => {
+    const container = el.createDiv({
+      cls: 'ofc-embedded-widget-container ofc-embed-fc-calendar'
+    });
+
+    let parsedConfig: Record<string, unknown> = {};
+    try {
+      const parsed: unknown = parseYaml(source);
+      parsedConfig = sanitizeEmbeddedConfig(isPlainRecord(parsed) ? parsed : {});
+    } catch (e) {
+      container.createEl('pre', {
+        text: `Full Calendar: Failed to parse configuration.\n${e instanceof Error ? e.message : String(e)}`
       });
+      return;
+    }
 
-      let parsedConfig: Record<string, unknown> = {};
-      try {
-        parsedConfig = (parseYaml(source) || {}) as Record<string, unknown>;
-      } catch (e) {
-        container.createEl('pre', {
-          text: `Full Calendar: Failed to parse configuration.\n${e instanceof Error ? e.message : String(e)}`
-        });
-        return;
-      }
+    const layout = parsedConfig.layout as
+      | { orientation?: 'horizontal' | 'vertical'; views?: Record<string, unknown>[] }
+      | undefined;
+    const hasLayout = layout && layout.views && layout.views.length > 0;
 
-      const layout = parsedConfig.layout as
-        | { orientation?: 'horizontal' | 'vertical'; views?: Record<string, unknown>[] }
-        | undefined;
-      const hasLayout = layout && layout.views && layout.views.length > 0;
+    const instances: EmbeddedWidgetInstance[] = [];
+    const updateCallbacks: (() => void)[] = [];
 
-      const instances: EmbeddedWidgetInstance[] = [];
-      const updateCallbacks: (() => void)[] = [];
+    const mountWidget = async () => {
+      const renderItem = async (targetEl: HTMLElement, itemConfig: Record<string, unknown>) => {
+        const normalizedItemConfig = sanitizeEmbeddedConfig(itemConfig);
 
-      const mountWidget = async () => {
-        let strategy = EmbeddedBlockRegistry.get(blockType);
-
-        // On-demand lazy load strategy if needed
-        if (!strategy && blockType === 'fc-analysis') {
-          try {
-            const { registerChronoAnalysisStrategy } =
-              await import('../../chrono_analyser/AnalysisWidgetStrategy');
-            registerChronoAnalysisStrategy(plugin);
-            strategy = EmbeddedBlockRegistry.get(blockType);
-          } catch (e) {
-            container.empty();
-            container.createEl('pre', {
-              text: `Failed to load Chrono Analyzer: ${e instanceof Error ? e.message : String(e)}`
-            });
-            return;
-          }
-        }
-
-        const activeStrategy = strategy;
-        if (!activeStrategy) {
-          container.empty();
-          container.createEl('pre', { text: `Unknown block type strategy: ${blockType}` });
+        if (!normalizedItemConfig || typeof normalizedItemConfig !== 'object') {
+          const itemConfigType = Array.isArray(itemConfig) ? 'array' : typeof itemConfig;
+          targetEl.empty();
+          targetEl.createEl('pre', {
+            text: `Full Calendar: Invalid item configuration (expected object, got ${itemConfigType})`
+          });
           return;
         }
 
-        const renderItem = async (targetEl: HTMLElement, itemConfig: Record<string, unknown>) => {
+        if (
+          normalizedItemConfig.styles &&
+          typeof normalizedItemConfig.styles === 'object' &&
+          !Array.isArray(normalizedItemConfig.styles)
+        ) {
+          for (const [key, val] of Object.entries(normalizedItemConfig.styles)) {
+            const cssKey = key.startsWith('--')
+              ? key
+              : key.replace(/([A-Z])/g, '-$1').toLowerCase();
+            targetEl.style.setProperty(cssKey, String(val));
+          }
+        }
+
+        const itemWidth = normalizedItemConfig.width;
+        if (typeof itemWidth === 'string' || typeof itemWidth === 'number') {
+          targetEl.setCssProps({
+            width: String(itemWidth),
+            flex: `0 0 ${itemWidth}`
+          });
+        }
+        const itemHeight = normalizedItemConfig.height;
+        if (
+          (typeof itemHeight === 'string' || typeof itemHeight === 'number') &&
+          itemHeight !== 'fit'
+        ) {
+          targetEl.setCssProps({
+            height: String(itemHeight)
+          });
+        }
+
+        const strategyName = resolveStrategy(normalizedItemConfig);
+        const strategy = await getOrLoadStrategy(strategyName, plugin);
+        if (!strategy) {
+          targetEl.empty();
+          targetEl.createEl('pre', { text: `Unknown widget type: ${strategyName}` });
+          return;
+        }
+
+        const inst = await strategy.render(targetEl, normalizedItemConfig, {
+          sourcePath: ctx.sourcePath,
+          onUpdate: callback => {
+            updateCallbacks.push(callback);
+            PluginState.getCache().on('update', callback);
+          }
+        });
+        instances.push(inst);
+      };
+
+      try {
+        if (hasLayout && layout && layout.views) {
+          const layoutOrientation = layout.orientation || 'horizontal';
+          container.addClass(`ofc-layout-${layoutOrientation}`);
+
+          for (const viewConfig of layout.views) {
+            const viewEl = container.createDiv({ cls: 'ofc-layout-view-item' });
+
+            // Custom width / flex layout control in horizontal layout
+            const viewWidth = viewConfig?.width;
+            if (
+              layoutOrientation === 'horizontal' &&
+              viewWidth !== undefined &&
+              (typeof viewWidth === 'string' || typeof viewWidth === 'number')
+            ) {
+              viewEl.setCssProps({
+                '--view-item-width': String(viewWidth),
+                '--view-item-flex': `0 0 ${viewWidth}`
+              });
+            } else {
+              viewEl.setCssProps({
+                '--view-item-flex': '1'
+              });
+            }
+
+            const viewHeight = viewConfig.height;
+            if (typeof viewHeight === 'string' || typeof viewHeight === 'number') {
+              viewEl.setCssProps({
+                height: viewHeight === 'fit' ? 'auto' : String(viewHeight)
+              });
+            } else {
+              const globalHeight = parsedConfig.height;
+              if (typeof globalHeight === 'string' || typeof globalHeight === 'number') {
+                viewEl.setCssProps({
+                  height: globalHeight === 'fit' ? 'auto' : String(globalHeight)
+                });
+              }
+            }
+
+            const shouldInherit =
+              viewConfig.inheritFilters !== false && parsedConfig.inheritFilters !== false;
+            const mergedViewConfig = {
+              ...(shouldInherit && {
+                calendars: parsedConfig.calendars,
+                categories: parsedConfig.categories,
+                subCategories: parsedConfig.subCategories,
+                completed: parsedConfig.completed,
+                isTask: parsedConfig.isTask,
+                excludeAllDayTasks: parsedConfig.excludeAllDayTasks,
+                textSearch: parsedConfig.textSearch,
+                titleFilter: parsedConfig.titleFilter,
+                tagFilter: parsedConfig.tagFilter,
+                pathFilter: parsedConfig.pathFilter,
+                sortBy: parsedConfig.sortBy,
+                sortOrder: parsedConfig.sortOrder,
+                startOffset: parsedConfig.startOffset,
+                endOffset: parsedConfig.endOffset,
+                weather: parsedConfig.weather,
+                defaultDate: parsedConfig.defaultDate,
+                zoomLevel: parsedConfig.zoomLevel,
+                slotDuration: parsedConfig.slotDuration,
+                slotLabelInterval: parsedConfig.slotLabelInterval,
+                header: parsedConfig.header,
+                searchQuery: parsedConfig.searchQuery,
+                showSearch: parsedConfig.showSearch,
+                showFooter: parsedConfig.showFooter,
+                showDateSelector: parsedConfig.showDateSelector
+              }),
+              ...viewConfig
+            };
+            await renderItem(viewEl, mergedViewConfig);
+          }
+        } else {
+          const configObj = parsedConfig as {
+            styles?: Record<string, string>;
+            width?: string;
+            height?: string;
+          };
           if (
-            itemConfig.styles &&
-            typeof itemConfig.styles === 'object' &&
-            !Array.isArray(itemConfig.styles)
+            configObj.styles &&
+            typeof configObj.styles === 'object' &&
+            !Array.isArray(configObj.styles)
           ) {
-            for (const [key, val] of Object.entries(itemConfig.styles)) {
+            for (const [key, val] of Object.entries(configObj.styles)) {
               const cssKey = key.startsWith('--')
                 ? key
                 : key.replace(/([A-Z])/g, '-$1').toLowerCase();
-              targetEl.style.setProperty(cssKey, String(val));
+              container.style.setProperty(cssKey, String(val));
             }
           }
 
-          const itemWidth = itemConfig.width;
-          if (typeof itemWidth === 'string' || typeof itemWidth === 'number') {
-            targetEl.style.width = String(itemWidth);
+          if (configObj.width) {
+            container.setCssProps({ width: configObj.width });
           }
-          const itemHeight = itemConfig.height;
-          if (
-            (typeof itemHeight === 'string' || typeof itemHeight === 'number') &&
-            itemHeight !== 'fit'
-          ) {
-            targetEl.style.height = String(itemHeight);
+          if (configObj.height && configObj.height !== 'fit') {
+            container.setCssProps({ height: configObj.height });
           }
 
-          const inst = await activeStrategy.render(targetEl, itemConfig, {
-            sourcePath: ctx.sourcePath,
-            onUpdate: callback => {
-              updateCallbacks.push(callback);
-              PluginState.getCache().on('update', callback);
-            }
-          });
-          instances.push(inst);
-        };
-
-        try {
-          if (hasLayout && layout && layout.views) {
-            const layoutOrientation = layout.orientation || 'horizontal';
-            container.addClass(`ofc-layout-${layoutOrientation}`);
-
-            for (const viewConfig of layout.views) {
-              const viewEl = container.createDiv({ cls: 'ofc-layout-view-item' });
-
-              // Custom width / flex layout control in horizontal layout
-              const viewWidth = viewConfig.width;
-              if (
-                layoutOrientation === 'horizontal' &&
-                (typeof viewWidth === 'string' || typeof viewWidth === 'number')
-              ) {
-                viewEl.setCssProps({
-                  width: String(viewWidth),
-                  flex: `0 0 ${viewWidth}`
-                });
-              } else {
-                viewEl.setCssProps({
-                  flex: '1'
-                });
-              }
-
-              const viewHeight = viewConfig.height;
-              if (typeof viewHeight === 'string' || typeof viewHeight === 'number') {
-                viewEl.setCssProps({
-                  height: viewHeight === 'fit' ? 'auto' : String(viewHeight)
-                });
-              } else {
-                const globalHeight = parsedConfig.height;
-                if (typeof globalHeight === 'string' || typeof globalHeight === 'number') {
-                  viewEl.setCssProps({
-                    height: globalHeight === 'fit' ? 'auto' : String(globalHeight)
-                  });
-                }
-              }
-
-              const shouldInherit =
-                viewConfig.inheritFilters !== false && parsedConfig.inheritFilters !== false;
-              const mergedViewConfig = {
-                ...(shouldInherit && {
-                  calendars: parsedConfig.calendars,
-                  categories: parsedConfig.categories,
-                  subCategories: parsedConfig.subCategories,
-                  completed: parsedConfig.completed,
-                  isTask: parsedConfig.isTask,
-                  excludeAllDayTasks: parsedConfig.excludeAllDayTasks,
-                  textSearch: parsedConfig.textSearch,
-                  titleFilter: parsedConfig.titleFilter,
-                  tagFilter: parsedConfig.tagFilter,
-                  pathFilter: parsedConfig.pathFilter,
-                  sortBy: parsedConfig.sortBy,
-                  sortOrder: parsedConfig.sortOrder,
-                  startOffset: parsedConfig.startOffset,
-                  endOffset: parsedConfig.endOffset
-                }),
-                ...viewConfig
-              };
-              await renderItem(viewEl, mergedViewConfig);
-            }
-          } else {
-            const configObj = parsedConfig as {
-              styles?: Record<string, string>;
-              width?: string;
-              height?: string;
-            };
-            if (
-              configObj.styles &&
-              typeof configObj.styles === 'object' &&
-              !Array.isArray(configObj.styles)
-            ) {
-              for (const [key, val] of Object.entries(configObj.styles)) {
-                const cssKey = key.startsWith('--')
-                  ? key
-                  : key.replace(/([A-Z])/g, '-$1').toLowerCase();
-                container.style.setProperty(cssKey, String(val));
-              }
-            }
-
-            if (configObj.width) {
-              container.style.width = configObj.width;
-            }
-            if (configObj.height && configObj.height !== 'fit') {
-              container.style.height = configObj.height;
-            }
-
-            await renderItem(container, parsedConfig);
-          }
-        } catch (e) {
-          container.empty();
-          container.createEl('pre', {
-            text: `Rendering failed: ${e instanceof Error ? e.message : String(e)}`
-          });
+          await renderItem(container, parsedConfig);
         }
-      };
-
-      // Set up lazy rendering using IntersectionObserver
-      let observer: IntersectionObserver | null = new IntersectionObserver(
-        entries => {
-          for (const entry of entries) {
-            if (entry.isIntersecting) {
-              void mountWidget();
-              observer?.disconnect();
-              observer = null;
-            }
-          }
-        },
-        { rootMargin: '100px' }
-      );
-      observer.observe(container);
-
-      const renderChild = new MarkdownRenderChild(container);
-      renderChild.onunload = () => {
-        if (observer) {
-          observer.disconnect();
-          observer = null;
-        }
-        updateCallbacks.forEach(cb => {
-          PluginState.getCache().off('update', cb);
+      } catch (e) {
+        container.empty();
+        container.createEl('pre', {
+          text: `Rendering failed: ${e instanceof Error ? e.message : String(e)}`
         });
-        instances.forEach(inst => inst.destroy());
-        instances.length = 0;
-      };
-      ctx.addChild(renderChild);
-    });
-  };
+      }
+    };
 
-  registerProcessor('fc-calendar');
-  registerProcessor('fc-analysis');
+    // Set up ResizeObserver on the container to update all widget instances
+    const containerResizeObserver = new ResizeObserver(() => {
+      instances.forEach(inst => inst.updateSize());
+    });
+    containerResizeObserver.observe(container);
+
+    // Set up lazy rendering using IntersectionObserver
+    let observer: IntersectionObserver | null = new IntersectionObserver(
+      entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            void mountWidget();
+            observer?.disconnect();
+            observer = null;
+          }
+        }
+      },
+      { rootMargin: '100px' }
+    );
+    observer.observe(container);
+
+    const renderChild = new MarkdownRenderChild(container);
+    renderChild.onunload = () => {
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+      if (containerResizeObserver) {
+        containerResizeObserver.disconnect();
+      }
+      updateCallbacks.forEach(cb => {
+        PluginState.getCache().off('update', cb);
+      });
+      instances.forEach(inst => inst.destroy());
+      instances.length = 0;
+    };
+    ctx.addChild(renderChild);
+  });
 }

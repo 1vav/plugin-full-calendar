@@ -18,9 +18,6 @@ jest.mock('@fullcalendar/interaction', () => ({
   }))
 }));
 
-// Mock the CSS import
-jest.mock('../backlog-styles.css', () => ({}));
-
 const MockedDraggable = Draggable as jest.MockedClass<typeof Draggable>;
 
 describe('Tasks Backlog Drag and Drop Integration', () => {
@@ -122,7 +119,7 @@ describe('Tasks Backlog Drag and Drop Integration', () => {
       const mockContainer = {} as HTMLElement;
 
       // Simulate the pattern used in TasksBacklogView.renderTasksList
-      let draggable: Draggable | null = null;
+      let draggable: Draggable | null;
 
       // First initialization
       draggable = new Draggable(mockContainer, {
@@ -133,7 +130,7 @@ describe('Tasks Backlog Drag and Drop Integration', () => {
       if (draggable) {
         draggable.destroy();
       }
-      draggable = new Draggable(mockContainer, {
+      new Draggable(mockContainer, {
         itemSelector: '.tasks-backlog-item'
       });
 
@@ -150,14 +147,13 @@ describe('Tasks Backlog Drag and Drop Integration', () => {
       >);
 
       const mockContainer = {} as HTMLElement;
-      let draggable: Draggable | null = new Draggable(mockContainer, {
+      const draggable: Draggable | null = new Draggable(mockContainer, {
         itemSelector: '.tasks-backlog-item'
       });
 
       // Simulate the cleanup pattern from TasksBacklogView.onClose
       if (draggable) {
         draggable.destroy();
-        draggable = null;
       }
 
       expect(mockDestroy).toHaveBeenCalled();

@@ -55,6 +55,7 @@ export interface TasksIntegrationSettings {
 export interface MilestonesSettings {
   counters: Record<string, number>;
   unlockedAt: Record<string, number>;
+  shown: Record<string, number>;
 }
 
 export type ApiScope =
@@ -104,6 +105,9 @@ export interface WorkspaceSettings {
     categories: string[]; // List of categories to show/hide
   };
 
+  // Advanced Bases filtering integration
+  basisQueryPath?: string;
+
   // Appearance Overrides
   businessHours?: BusinessHoursSettings; // Override global business hours setting
   timelineExpanded?: boolean; // Timeline categories expanded by default
@@ -116,6 +120,23 @@ export interface WorkspaceSettings {
   weekends?: boolean; // Whether to display weekends
   hiddenDays?: number[]; // Array of day numbers to hide (0=Sunday, 1=Monday, etc.)
   dayMaxEvents?: number | boolean; // Max events per day in month view (true = no limit, false = default, number = limit)
+
+  // General & appearance overrides
+  firstDay?: number;
+  timeFormat24h?: boolean;
+  clickToCreateEventFromMonthView?: boolean;
+  displayTimezone?: string | null;
+  enableAdvancedCategorization?: boolean;
+  enableBackgroundEvents?: boolean;
+  showEventInStatusBar?: boolean;
+  highlightCurrentOrNextEvent?: boolean;
+  categorySettings?: { name: string; color: string }[];
+  slotDuration?: string;
+  slotLabelInterval?: string;
+  headerToolbar?: false | object;
+  footerToolbar?: false | object;
+  height?: 'auto' | number | 'parent';
+  weatherHide?: boolean;
 }
 
 export interface GoogleAccount {
@@ -157,6 +178,7 @@ export interface FullCalendarSettings {
   useCustomGoogleClient: boolean;
   googleClientId: string;
   googleClientSecret: string;
+  googleUseCopyPasteAuth: boolean;
   googleAccounts: GoogleAccount[];
   useCustomMicrosoftClient: boolean;
   microsoftClientId: string;
@@ -180,6 +202,11 @@ export interface FullCalendarSettings {
   weekends?: boolean; // Whether to display weekends
   hiddenDays?: number[]; // Array of day numbers to hide (0=Sunday, 1=Monday, etc.)
   dayMaxEvents?: number | boolean; // Max events per day in month view (true = no limit, false = default, number = limit)
+  slotDuration?: string;
+  slotLabelInterval?: string;
+  headerToolbar?: false | object;
+  footerToolbar?: false | object;
+  height?: 'auto' | number | 'parent';
   activityWatch: ActivityWatchSettings;
   tasksIntegration: TasksIntegrationSettings;
   milestones: MilestonesSettings;
@@ -189,6 +216,9 @@ export interface FullCalendarSettings {
   fcrReminderCompanion: FcrReminderCompanionSettings;
   apiTokens?: Record<string, ApiTokenRecord>;
   authorizedTokens?: Record<string, { pluginId: string; reason: string; grantedAt: number }>;
+
+  enableLocalServer: boolean;
+  localServerPort: number;
 
   dev?: number | string;
   milestoneNotifierDuration?: number;
@@ -205,9 +235,11 @@ export interface FullCalendarSettings {
   weatherHide: boolean;
   weatherInputMode: 'city' | 'coords';
   weatherUnit?: 'C' | 'F';
+  useLegacyPlaintextCredentials: boolean;
 }
 
 export const DEFAULT_SETTINGS: FullCalendarSettings = {
+  useLegacyPlaintextCredentials: false,
   calendarSources: [],
   defaultCalendar: 0,
   firstDay: 0,
@@ -225,6 +257,7 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
   useCustomGoogleClient: false,
   googleClientId: '',
   googleClientSecret: '',
+  googleUseCopyPasteAuth: false,
   googleAccounts: [],
   useCustomMicrosoftClient: false,
   microsoftClientId: '',
@@ -273,9 +306,10 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
   },
   milestones: {
     counters: {},
-    unlockedAt: {}
+    unlockedAt: {},
+    shown: {}
   },
-  enableMonthlyStatsReport: true,
+  enableMonthlyStatsReport: false,
   lastMonthlyMilestonesGeneratedMonth: null,
   lastMonthlyMilestonesCheckDate: null,
   fcrReminderCompanion: {
@@ -284,6 +318,8 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
   },
   apiTokens: {},
   authorizedTokens: {},
+  enableLocalServer: false,
+  localServerPort: 8540,
   milestoneNotifierDuration: 8000,
 
   enableDefaultReminder: true,
@@ -316,6 +352,7 @@ export function createDefaultWorkspace(name: string): WorkspaceSettings {
     defaultDate: undefined,
     visibleCalendars: undefined,
     categoryFilter: undefined,
+    basisQueryPath: undefined,
     businessHours: undefined,
     timelineExpanded: undefined
   };

@@ -19,7 +19,9 @@ import { FullCalendarSettings, WorkspaceSettings } from '../../types/settings';
 import { EventInput, EventSourceInput } from '@fullcalendar/core';
 import { OFCEventSource, CachedEvent } from '../../core/EventCache';
 import { toEventInput } from '../../core/interop';
-import { activeDocument } from 'obsidian';
+import { activeDocument, TFile, parseYaml } from 'obsidian';
+import { evaluateBaseFilter, BaseFile } from './bases/BasesFilterEvaluator';
+import { PluginState } from '../../core/PluginState';
 
 // Copied from view.ts to break circular dependency.
 function getCalendarColors(color: string | null | undefined): {
@@ -61,9 +63,48 @@ function getCalendarColors(color: string | null | undefined): {
 
 export class WorkspaceManager {
   private settings: FullCalendarSettings;
+  private cachedBasesData: (BaseFile & { settings?: Partial<WorkspaceSettings> }) | null = null;
+  private cachedBasesQueryPath: string | null = null;
 
   constructor(settings: FullCalendarSettings) {
     this.settings = settings;
+  }
+
+  /**
+   * Asynchronously loads and parses the active workspace's Bases query file,
+   * caching the parsed filter tree in memory.
+   */
+  public async loadBasesFilter(): Promise<void> {
+    const workspace = this.getActiveWorkspace();
+    const queryPath = workspace?.basisQueryPath;
+
+    if (!queryPath) {
+      this.cachedBasesData = null;
+      this.cachedBasesQueryPath = null;
+      return;
+    }
+
+    if (queryPath === this.cachedBasesQueryPath) {
+      return; // Already loaded/cached
+    }
+
+    try {
+      const app = PluginState.getPlugin().app;
+      const file = app.vault.getAbstractFileByPath(queryPath);
+      if (file instanceof TFile) {
+        const content = await app.vault.read(file);
+        const baseData = parseYaml(content) as BaseFile & { settings?: Partial<WorkspaceSettings> };
+        this.cachedBasesData = baseData || null;
+        this.cachedBasesQueryPath = queryPath;
+      } else {
+        this.cachedBasesData = null;
+        this.cachedBasesQueryPath = null;
+      }
+    } catch (e) {
+      console.error('Failed to load active workspace Bases filter:', e);
+      this.cachedBasesData = null;
+      this.cachedBasesQueryPath = null;
+    }
   }
 
   /**
@@ -98,46 +139,100 @@ export class WorkspaceManager {
 
     const workspaceSettings = { ...this.settings };
 
+    // Resolve combined config, prioritizing overrides inside the .base file settings block
+    const activeConfig = { ...workspace };
+    if (this.cachedBasesData?.settings) {
+      Object.assign(activeConfig, this.cachedBasesData.settings);
+    }
+
     // Apply view overrides
-    if (workspace.defaultView?.desktop || workspace.defaultView?.mobile) {
+    if (activeConfig.defaultView?.desktop || activeConfig.defaultView?.mobile) {
       workspaceSettings.initialView = {
-        desktop: workspace.defaultView.desktop || this.settings.initialView?.desktop,
-        mobile: workspace.defaultView.mobile || this.settings.initialView?.mobile
+        desktop: activeConfig.defaultView.desktop || this.settings.initialView?.desktop,
+        mobile: activeConfig.defaultView.mobile || this.settings.initialView?.mobile
       };
     }
 
     // Apply business hours override
-    if (workspace.businessHours !== undefined) {
-      workspaceSettings.businessHours = workspace.businessHours;
+    if (activeConfig.businessHours !== undefined) {
+      workspaceSettings.businessHours = activeConfig.businessHours;
     }
 
-    // Apply new granular view configuration overrides
-    if (workspace.slotMinTime !== undefined) {
-      workspaceSettings.slotMinTime = workspace.slotMinTime;
+    // Apply granular view configuration overrides
+    if (activeConfig.slotMinTime !== undefined) {
+      workspaceSettings.slotMinTime = activeConfig.slotMinTime;
     }
 
-    if (workspace.slotMaxTime !== undefined) {
-      workspaceSettings.slotMaxTime = workspace.slotMaxTime;
+    if (activeConfig.slotMaxTime !== undefined) {
+      workspaceSettings.slotMaxTime = activeConfig.slotMaxTime;
     }
 
-    if (workspace.allDaySlot !== undefined) {
-      workspaceSettings.allDaySlot = workspace.allDaySlot;
+    if (activeConfig.allDaySlot !== undefined) {
+      workspaceSettings.allDaySlot = activeConfig.allDaySlot;
     }
 
-    if (workspace.timeGridDayHeaderFormat !== undefined) {
-      workspaceSettings.timeGridDayHeaderFormat = workspace.timeGridDayHeaderFormat;
+    if (activeConfig.timeGridDayHeaderFormat !== undefined) {
+      workspaceSettings.timeGridDayHeaderFormat = activeConfig.timeGridDayHeaderFormat;
     }
 
-    if (workspace.weekends !== undefined) {
-      workspaceSettings.weekends = workspace.weekends;
+    if (activeConfig.weekends !== undefined) {
+      workspaceSettings.weekends = activeConfig.weekends;
     }
 
-    if (workspace.hiddenDays !== undefined) {
-      workspaceSettings.hiddenDays = workspace.hiddenDays;
+    if (activeConfig.hiddenDays !== undefined) {
+      workspaceSettings.hiddenDays = activeConfig.hiddenDays;
     }
 
-    if (workspace.dayMaxEvents !== undefined) {
-      workspaceSettings.dayMaxEvents = workspace.dayMaxEvents;
+    if (activeConfig.dayMaxEvents !== undefined) {
+      workspaceSettings.dayMaxEvents = activeConfig.dayMaxEvents;
+    }
+
+    // Apply general & appearance overrides
+    if (activeConfig.firstDay !== undefined) {
+      workspaceSettings.firstDay = activeConfig.firstDay;
+    }
+    if (activeConfig.timeFormat24h !== undefined) {
+      workspaceSettings.timeFormat24h = activeConfig.timeFormat24h;
+    }
+    if (activeConfig.clickToCreateEventFromMonthView !== undefined) {
+      workspaceSettings.clickToCreateEventFromMonthView =
+        activeConfig.clickToCreateEventFromMonthView;
+    }
+    if (activeConfig.displayTimezone !== undefined) {
+      workspaceSettings.displayTimezone = activeConfig.displayTimezone;
+    }
+    if (activeConfig.enableAdvancedCategorization !== undefined) {
+      workspaceSettings.enableAdvancedCategorization = activeConfig.enableAdvancedCategorization;
+    }
+    if (activeConfig.enableBackgroundEvents !== undefined) {
+      workspaceSettings.enableBackgroundEvents = activeConfig.enableBackgroundEvents;
+    }
+    if (activeConfig.showEventInStatusBar !== undefined) {
+      workspaceSettings.showEventInStatusBar = activeConfig.showEventInStatusBar;
+    }
+    if (activeConfig.highlightCurrentOrNextEvent !== undefined) {
+      workspaceSettings.highlightCurrentOrNextEvent = activeConfig.highlightCurrentOrNextEvent;
+    }
+    if (activeConfig.categorySettings !== undefined) {
+      workspaceSettings.categorySettings = activeConfig.categorySettings;
+    }
+    if (activeConfig.slotDuration !== undefined) {
+      workspaceSettings.slotDuration = activeConfig.slotDuration;
+    }
+    if (activeConfig.slotLabelInterval !== undefined) {
+      workspaceSettings.slotLabelInterval = activeConfig.slotLabelInterval;
+    }
+    if (activeConfig.headerToolbar !== undefined) {
+      workspaceSettings.headerToolbar = activeConfig.headerToolbar;
+    }
+    if (activeConfig.footerToolbar !== undefined) {
+      workspaceSettings.footerToolbar = activeConfig.footerToolbar;
+    }
+    if (activeConfig.height !== undefined) {
+      workspaceSettings.height = activeConfig.height;
+    }
+    if (activeConfig.weatherHide !== undefined) {
+      workspaceSettings.weatherHide = activeConfig.weatherHide;
     }
 
     return workspaceSettings;
@@ -176,10 +271,14 @@ export class WorkspaceManager {
   /**
    * Filters a list of events based on the active workspace's category filter.
    * @param events An array of EventInput objects for a single calendar source.
+   * @param workspaceSettings The resolved settings overrides for the active workspace.
    * @returns A filtered array of EventInput objects.
    */
-  private filterEventsByCategory(events: EventInput[]): EventInput[] {
-    if (!this.settings.enableAdvancedCategorization) {
+  private filterEventsByCategory(
+    events: EventInput[],
+    workspaceSettings: FullCalendarSettings
+  ): EventInput[] {
+    if (!workspaceSettings.enableAdvancedCategorization) {
       return events;
     }
 
@@ -191,7 +290,7 @@ export class WorkspaceManager {
       return events;
     }
 
-    const knownCategories = new Set(this.settings.categorySettings?.map(c => c.name) ?? []);
+    const knownCategories = new Set(workspaceSettings.categorySettings?.map(c => c.name) ?? []);
 
     return events.filter(event => {
       const props = event.extendedProps as
@@ -228,13 +327,42 @@ export class WorkspaceManager {
    */
   public getFilteredEventSources(allSources: OFCEventSource[]): EventSourceInput[] {
     const filteredSources = this.filterCalendarSources(allSources);
+    const workspaceSettings = this.getCalendarConfig() as FullCalendarSettings;
 
     const sources = filteredSources.map(({ events, editable, color, id }): EventSourceInput => {
-      const mainEvents = events
-        .map((e: CachedEvent) => toEventInput(e.id, e.event, this.settings))
+      // Apply Bases query filter on events first if active and loaded
+      const basesFilter = this.cachedBasesData?.filters;
+      let filteredCachedEvents = events;
+      if (basesFilter) {
+        const app = PluginState.getPlugin().app;
+        filteredCachedEvents = events.filter(e => {
+          const eventDetails = PluginState.getCache().store.getEventDetails(e.id);
+          const path = eventDetails?.location?.path;
+          if (!path) return true; // Keep events without file paths by default
+
+          const calendarId = eventDetails?.calendarId;
+          const calendarName = calendarId
+            ? workspaceSettings.calendarSources.find(s => s.id === calendarId)?.name
+            : undefined;
+
+          const file = app.vault.getAbstractFileByPath(path);
+          if (file instanceof TFile) {
+            return evaluateBaseFilter(basesFilter, file, app.metadataCache, {
+              calendarId,
+              calendarName,
+              category: e.event.category,
+              subCategory: e.event.subCategory
+            });
+          }
+          return true;
+        });
+      }
+
+      const mainEvents = filteredCachedEvents
+        .map((e: CachedEvent) => toEventInput(e.id, e.event, workspaceSettings))
         .filter((e): e is EventInput => !!e);
 
-      const filteredEvents = this.filterEventsByCategory(mainEvents);
+      const filteredEvents = this.filterEventsByCategory(mainEvents, workspaceSettings);
 
       return {
         id,
