@@ -34,6 +34,7 @@ site/
 
 # Local vault configuration (private)
 .vault-config.json
+release-template.md
 
 # direnv config
 .envrc

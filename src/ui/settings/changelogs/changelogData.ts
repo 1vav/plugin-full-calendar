@@ -14,6 +14,59 @@ export interface Version {
 // Add new versions to the TOP of this array.
 export const changelogData: Version[] = [
   {
+    version: '0.13.4',
+    changes: [
+      {
+        type: 'new',
+        title: 'HOT: Unified Task Backlog across Tasks, CalDAV, and Google Tasks',
+        description:
+          'Backlog is now provider-agnostic with better drag scheduling/unscheduling and improved sync consistency across [Tasks](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/tasks-plugin-integration/), [CalDAV](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/caldav/), and [Google Tasks](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/gtasks/).'
+      },
+      {
+        type: 'new',
+        title: 'Google Tasks Two-Way Sync',
+        description:
+          'Added first-class [Google Tasks](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/gtasks/) provider support, including task scheduling, completion sync, and backlog integration.'
+      },
+      {
+        type: 'new',
+        title: 'Holidays Calendar Provider',
+        description:
+          'Introduced configurable [Holidays calendar](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/holidays/) support for regional holiday overlays in your views.'
+      },
+      {
+        type: 'new',
+        title: 'Embedded Widgets + Dashboard Showcases',
+        description:
+          'Added unified [embedded widget](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/embeds/index/) architecture for weather/backlog/analytics-style calendar codeblocks and dashboards.'
+      },
+      {
+        type: 'new',
+        title: 'Weather Forecast UX and Reliability',
+        description:
+          'Expanded [weather forecasts](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/weather/) with richer display and stronger caching/offline behavior.'
+      },
+      {
+        type: 'improvement',
+        title: 'Recurring Overrides on External Calendars',
+        description:
+          'Improved [recurring event override](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/events/recurring/) behavior for remote providers with safer instance mutation and reminder sync.'
+      },
+      {
+        type: 'improvement',
+        title: 'Developer API and Local Server Enhancements',
+        description:
+          'Enhanced [API & CLI](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/api/) workflows with stronger local-server and credential handling foundations.'
+      },
+      {
+        type: 'fix',
+        title: 'Task Placement, Linked Notes, and VTODO Stability',
+        description:
+          'Fixed backlog/task placement edge cases, linked-note duplication/race conditions, and improved CalDAV VTODO synchronization reliability.'
+      }
+    ]
+  },
+  {
     version: '0.13.2',
     changes: [
       {

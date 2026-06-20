@@ -71,7 +71,9 @@ export async function loadCachedScript(app: App, filename: string, cdnUrl: strin
   return new Promise<void>((resolve, reject) => {
     const doc =
       typeof activeDocument !== 'undefined' && activeDocument ? activeDocument : window.document;
-    const scriptId = `ofc-script-${filename.replace(/\.[^/.]+$/, '')}`;
+    const extIndex = filename.lastIndexOf('.');
+    const baseName = extIndex !== -1 ? filename.substring(0, extIndex) : filename;
+    const scriptId = `ofc-script-${baseName}`;
     const existing = doc.getElementById(scriptId) as LoadedScriptElement | null;
     if (existing) {
       if (existing.loaded) {

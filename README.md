@@ -1,7 +1,7 @@
 <div align="right">
   <img src="https://img.shields.io/github/downloads/obsidian-full-calendar-remastered/plugin-full-calendar/total?label=Downloads" alt="Downloads" />
   <a href="#contributors-"><img src="https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square" alt="All Contributors" /></a>
-  <a href="https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/"><img src="https://img.shields.io/badge/Version-v_0.13.2-blue" alt="Version" /></a>
+  <a href="https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/"><img src="https://img.shields.io/badge/Version-v_0.13.4-blue" alt="Version" /></a>
 </div>
 
 
@@ -36,6 +36,16 @@ Integrations include
 
 The FullCalendar library is released under the [GPLv3 license](https://fullcalendar.io/license). It's an awesome piece of work, and it would not have been possible to make something like this plugin so easily without it.
 
+## Installation
+
+1. Add to your obsidian vault from the [Obsidian Plugin Store](https://community.obsidian.md/plugins/full-calendar-remastered).
+2. Obsidian community guidelines block any on demand caching of external libraries and require all of these to be bundled into a single file. For this reason our `main.js` is 7.2 MB (380 ms loadtime). If you prefer a leaner on ~1.4MB (160ms loadtime), build it yourself via 
+```bash
+git clone https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar.git
+pnpm run prod:lead
+```
+
+
 ### Your turn to support OpenSource
 > FCR is developed at a [high velocity](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/SustainabilityEthics/#the-economic-reality-of-maintenance) using AI-augmented engineering. To keep up this pace (and avoid reverting to slow, manual coding), the project relies on a small community subsidy to cover AI tools (25 USD / month). 
 
@@ -49,9 +59,6 @@ If this project has helped you consider supporting:
   <br><br>
 </div>
 
-## Installation
-
-Add to your obsidian vault from the [Obsidian Plugin Store](https://community.obsidian.md/plugins/full-calendar-remastered).
 
 
 ## Contributors ✨

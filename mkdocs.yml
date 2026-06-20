@@ -160,6 +160,7 @@ nav:
                 - Status Bar Integration: user/features/statusbar.md
                 - Internationalization: user/features/i18n.md
                 - Link Notes to Remote Events: user/features/event-linked-notes.md
+                - Note Templating System: user/features/templates.md
                 - Live Preview Decorators: user/features/live-preview.md
                 - Developer API & CLI: user/features/api.md
           - Embedded Calendars:
@@ -218,6 +219,7 @@ nav:
                 - ActivityWatch Architecture: architecture/activitywatch/index.md
                 - ActivityWatch Implementation: architecture/activitywatch/implementation.md
                 - Linked Notes to Remote Events: architecture/system/features/event-linked-notes.md
+                - Note Templating Architecture: architecture/system/features/templates.md
                 - FCR Reminder Companion App: architecture/system/features/fcr-reminder-architecture.md
           - Views Architecture:
                 - architecture/views/architecture.md

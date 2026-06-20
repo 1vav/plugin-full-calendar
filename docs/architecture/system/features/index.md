@@ -15,6 +15,7 @@
 | Category | Parsing, normalization, and bulk categorization workflows. | `EventEnhancer`, settings, UI controls |
 | NLP (FCR Command) | Universal orchestrator: NL event creation, view navigation, settings, cache, sync. | `smartCalendar`, `InternalAPI`, `PluginState`, `EventCache`, `ProviderRegistry` |
 | Event Linked Notes | Linking local markdown notes to remote events via reactive indexing. | `LinkedNoteIndex`, `TemplateEngine`, `noteUtils`, UI / Providers |
+| Note Templates | Shared rendering contract for generated local and linked notes. | `TemplateEngine`, provider create flows, linked note manager |
 
 ## Architecture rule
 
@@ -32,4 +33,5 @@ Feature modules may transform, filter, and react, but they must not replace core
 - [Milestones Architecture](milestones-architecture.md)
 - [NLP Engine Architecture](nlp-architecture.md)
 - [Event Linked Notes Architecture](event-linked-notes.md)
+- [Note Templating Architecture](templates.md)
 - [ActivityWatch Architecture](../../activitywatch/index.md)

@@ -14,6 +14,7 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = process.argv[2] === "production";
+const isLean = process.argv.includes("lean") || !prod;
 
 async function build() {
   const context = await esbuild.context({
@@ -28,8 +29,6 @@ async function build() {
     external: [
       "obsidian",
       "electron",
-      "plotly.js",
-      "date-holidays",
       "@codemirror/autocomplete",
       "@codemirror/closebrackets",
       "@codemirror/collab",
@@ -60,10 +59,17 @@ async function build() {
     legalComments: prod ? 'none' : 'eof',
     pure: prod ? ['console.log'] : [],
     drop: prod ? ['debugger'] : [],
+    define: {
+      "process.env.BUILD_LEAN": JSON.stringify(isLean ? "true" : "false"),
+    },
     alias: {
       'react': 'preact/compat',
       'react-dom/client': 'preact/compat/client',
       'react-dom': 'preact/compat',
+      ...(isLean ? {
+        'plotly.js': path.resolve('./src/stubs/plotly-stub.ts'),
+        'date-holidays': path.resolve('./src/stubs/holidays-stub.ts'),
+      } : {}),
     },
     sourcemap: prod ? false : "inline",
     treeShaking: true,

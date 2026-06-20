@@ -15,6 +15,7 @@
 | Use in your native language | [Internationalization (i18n)](i18n.md) | Multi-language support and automatic translation |
 | Glance at next event | [Status Bar Integration](statusbar.md) | Quick countdown to your next meeting in the Obsidian status bar |
 | Take local notes for remote events | [Event Linked Notes](event-linked-notes.md) | Link rich local notes to external events with automatic templating |
+| Standardize generated note bodies | [Note Templating System](templates.md) | Reusable placeholders and markdown templates for local and linked notes |
 | Unified Backlog Panel | [Task Backlog](tasks-backlog.md) | Aggregate and schedule tasks across multiple providers |
 | Glance at weather conditions | [Weather Forecasts](weather.md) | Glance at live WMO conditions and temperatures in your daily, weekly, and monthly views |
 | CLI & Automations | [Developer API & CLI](api.md) | Access your calendar programmatically via REST API and PATs |
@@ -28,6 +29,7 @@
 - Global: [Internationalization (i18n)](i18n.md)
 - UI: [Status Bar Integration](statusbar.md)
 - Note Integration: [Event Linked Notes](event-linked-notes.md)
+- Note Templates: [Note Templating System](templates.md)
 - Task Backlog: [Task Backlog](tasks-backlog.md)
 - Weather: [Weather Forecasts](weather.md)
 - Programmatic: [Developer API & CLI](api.md)
@@ -41,4 +43,4 @@
 
 ---
 
-[NLP](nlp.md) · [Interactions](interactions.md) · [Reminders](reminders.md) · [FCR Reminder](fcr-reminder.md) · [Status Bar](statusbar.md) · [Linked Notes](event-linked-notes.md) · [Task Backlog](tasks-backlog.md) · [Weather](weather.md) · [Developer API](api.md) · [NLP Architecture](../../architecture/system/features/nlp-architecture.md)
+[NLP](nlp.md) · [Interactions](interactions.md) · [Reminders](reminders.md) · [FCR Reminder](fcr-reminder.md) · [Status Bar](statusbar.md) · [Linked Notes](event-linked-notes.md) · [Templates](templates.md) · [Task Backlog](tasks-backlog.md) · [Weather](weather.md) · [Developer API](api.md) · [NLP Architecture](../../architecture/system/features/nlp-architecture.md)

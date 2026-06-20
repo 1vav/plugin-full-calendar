@@ -4,8 +4,7 @@
  *
  * @description
  * Creates a transparent Proxy for the `Holidays` class constructor and manages local vault caching.
- * Ensures the date-holidays library is not bundled inside the main.js, keeping the plugin light.
- * Once loaded, works 100% offline via local vault storage.
+ * Handles both bundled (Community) and dynamically loaded (Lean) configurations seamlessly.
  *
  * @license See LICENSE.md
  */
@@ -21,14 +20,23 @@ declare global {
   }
 }
 
+let holidaysClass: typeof HolidaysType | null = null;
 let holidaysPromise: Promise<void> | null = null;
 
+// Define explicit types to satisfy ESLint typescript rules
+type HolidaysConstructor = new (...args: unknown[]) => HolidaysType;
+
+interface ImportHolidaysModule {
+  default?: typeof HolidaysType;
+}
+
 /**
- * Triggers loading of the date-holidays library from the local cache, falling back to CDN.
- * Once fetched, it is cached permanently in the vault to support complete offline usage.
+ * Triggers loading of the date-holidays library.
+ * Bundled via esbuild and dynamically imported here to support lazy loading.
+ * Falls back to local cached script loading if the bundled module is a stub (Lean build).
  */
 export async function ensureHolidaysLoaded(app: App): Promise<void> {
-  if (window.Holidays) {
+  if (holidaysClass) {
     return;
   }
 
@@ -37,29 +45,37 @@ export async function ensureHolidaysLoaded(app: App): Promise<void> {
   }
 
   holidaysPromise = (async () => {
-    const filename = 'date-holidays-3.30.1.umd.min.js';
-    const cdnUrl = 'https://cdn.jsdelivr.net/npm/date-holidays@3.30.1/dist/umd.min.js';
     try {
-      await loadCachedScript(app, filename, cdnUrl);
+      const module = await import('date-holidays');
+      if (process.env.BUILD_LEAN === 'true') {
+        // Fall back to dynamic script loading from cache/CDN (Lean build)
+        const filename = 'date-holidays-3.30.1.umd.min.js';
+        const cdnUrl = 'https://cdn.jsdelivr.net/npm/date-holidays@3.30.1/dist/umd.min.js';
+        await loadCachedScript(app, filename, cdnUrl);
+        holidaysClass = window.Holidays || null;
+      } else {
+        // Use the bundled module (Obsidian Community build)
+        const rawHolidays =
+          (module as ImportHolidaysModule).default || (module as unknown as typeof HolidaysType);
+        if (typeof rawHolidays === 'function') {
+          holidaysClass = rawHolidays;
+        }
+        window.Holidays = holidaysClass || undefined;
+      }
+
+      if (!holidaysClass) {
+        throw new Error('Holidays constructor is not a valid class/constructor function.');
+      }
     } catch (err) {
       holidaysPromise = null; // Allow retry on failure
       throw err;
-    }
-
-    if (!window.Holidays) {
-      holidaysPromise = null;
-      throw new Error(
-        'date-holidays was fetched but Holidays constructor is not defined globally.'
-      );
     }
   })();
 
   return holidaysPromise;
 }
 
-// Define explicit types to satisfy ESLint typescript rules
-type HolidaysConstructor = new (...args: unknown[]) => HolidaysType;
-interface HolidaysModule {
+interface ActiveHolidaysWrapper {
   default?: HolidaysConstructor;
 }
 
@@ -69,28 +85,21 @@ interface HolidaysModule {
  */
 export const HolidaysProxy = new Proxy(function () {} as unknown as typeof HolidaysType, {
   construct(target, argumentsList) {
-    const rawHolidays = window.Holidays as unknown as
-      | HolidaysConstructor
-      | HolidaysModule
-      | undefined;
-    if (!rawHolidays) {
+    const activeHolidays = window.Holidays || holidaysClass;
+    if (!activeHolidays) {
       throw new Error(
         'date-holidays library is not loaded yet! Please await ensureHolidaysLoaded() first.'
       );
     }
 
-    // Handle UMD module object with .default export vs direct global constructor safely
-    let GlobalHolidays: HolidaysConstructor | undefined;
-    if (typeof rawHolidays === 'function') {
-      GlobalHolidays = rawHolidays;
-    } else if (rawHolidays && typeof rawHolidays.default === 'function') {
-      GlobalHolidays = rawHolidays.default;
+    // Handle module default wrapper if dynamic import returned it differently
+    let constructorFn: HolidaysConstructor = activeHolidays as unknown as HolidaysConstructor;
+    const activeHolidaysObj = activeHolidays as unknown as ActiveHolidaysWrapper;
+    if (activeHolidaysObj.default && typeof activeHolidaysObj.default === 'function') {
+      constructorFn = activeHolidaysObj.default;
     }
 
-    if (!GlobalHolidays) {
-      throw new Error('Holidays constructor is not a valid class/constructor function.');
-    }
-
-    return Reflect.construct(GlobalHolidays, argumentsList);
+    const constructorToCall = constructorFn as unknown as new (...args: unknown[]) => unknown;
+    return Reflect.construct(constructorToCall, argumentsList) as HolidaysType;
   }
 });

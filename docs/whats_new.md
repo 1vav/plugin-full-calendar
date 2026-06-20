@@ -4,6 +4,40 @@ This page highlights the latest **major features and improvements** to help you 
 For a detailed version-by-version breakdown, see the [Changelog](changelog.md).
 
 
+## ✅ Google Tasks Integration
+
+Full Calendar now includes first-class **Google Tasks** support, so task planning can sit beside event planning in the same workspace.
+
+*   **Two-Way Synchronization**: Schedule, reschedule, and complete Google Tasks from within Full Calendar with sync-safe updates.
+*   **Backlog-Native Workflow**: Google Tasks naturally feed into the unified backlog flow for drag-and-drop planning.
+*   **Provider-Consistent UX**: Uses the same calendar/backlog interaction model as other task-capable providers for predictable behavior.
+
+➡️ Learn more in **[Google Tasks](user/calendars/gtasks.md)**.
+
+---
+
+## 🎉 Holidays Calendar
+
+Plan with better real-world context using a dedicated **Holidays calendar source**.
+
+*   **Regional Holiday Overlays**: Add holiday observances directly into your calendar views to avoid planning conflicts.
+*   **Calendar-Aware Visibility**: Holidays participate like any other source, so they can be toggled and filtered as part of normal workflows.
+*   **Works with Existing Views**: Integrates cleanly with your monthly, weekly, and daily planning experience.
+
+➡️ Learn more in **[Holidays Calendar](user/calendars/holidays.md)**.
+
+---
+
+## 🧩 Embedded Calendars & Widgets
+
+Full Calendar now supports richer **in-note embedded experiences** so your planning surfaces can live inside dashboards and knowledge workflows.
+
+*   **Dashboard-Friendly Embeds**: Render calendar-driven blocks directly in notes for command centers and project hubs.
+*   **Unified Widget Direction**: Embedded views share a common architecture for weather, backlog, and analysis-oriented usage patterns.
+*   **Knowledge-Workflow Integration**: Bring planning context closer to your notes instead of switching between disconnected views.
+
+➡️ Learn more in **[Embedded Calendars](user/embeds/index.md)**.
+
 ## 🌤️ Weather Forecast Integration
 
 Plan your schedule in harmony with the weather! Full Calendar now includes a fully integrated, live weather forecast feature for your daily, weekly, and monthly views.
@@ -18,14 +52,18 @@ Plan your schedule in harmony with the weather! Full Calendar now includes a ful
 
 ---
 
-## 📋 Unified Task Backlog & CalDAV Tasks
+## 📋 Unified Task Backlog
 
 The task backlog has been completely reimagined as a **generalized, multi-source task backlog framework**! It is now fully decoupled from specific integrations, adhering to strict SOLID design principles, and aggregates unscheduled tasks from multiple sources in a single aggregated side panel.
 
-*   **CalDAV Tasks (VTODO)**: You can now fetch remote unscheduled `VTODO` tasks from your private iCloud, Fastmail, or self-hosted CalDAV servers directly into the Task Backlog sidebar.
-*   **Drag-and-Drop Scheduling**: Drag any remote CalDAV task or local Obsidian task from the backlog onto the calendar. The plugin automatically schedules the task (as all-day or timed) and syncs it back to your CalDAV server or local markdown files in real-time.
-*   **Task Creation**: Create new remote CalDAV tasks directly inside the backlog side panel, choosing your preferred destination account.
+*   **Multi-Provider Aggregation**: Combine unscheduled work from Obsidian Tasks, CalDAV VTODO, and Google Tasks into one focused planning panel.
+*   **Drag-and-Drop Scheduling**: Drag any supported backlog task onto the calendar to schedule instantly with provider-aware synchronization.
+*   **Direct Task Creation**: Create remote tasks from the backlog UI for supported providers without leaving your planning flow.
 *   **Event Linked Notes**: Clicking the note icon next to a backlog CalDAV task instantly generates and opens a local templates-driven markdown note, keeping your rich detail vault-local and your sync lightweight.
+
+➡️ Learn more in **[Task Backlog](user/features/tasks-backlog.md)**, **[Tasks Integration](user/calendars/tasks-plugin-integration.md)**, **[Google Tasks](user/calendars/gtasks.md)**, and **[CalDAV](user/calendars/caldav.md)**.
+
+
 
 ---
 
@@ -100,7 +138,7 @@ The integration with the **Obsidian Tasks plugin** has been completely overhaule
 
 ---
 
-## 🔔 [Event Reminder System](user/features/reminders.md)
+## 🔔 Event Reminder System
 
 Never miss an important meeting again! The new **[Event Reminder System](user/features/reminders.md)** brings native desktop notifications to Full Calendar. Get notified 10 minutes before your events start, and optionally before they end.
 
@@ -109,7 +147,7 @@ Never miss an important meeting again! The new **[Event Reminder System](user/fe
 - **Universal Support:** Works with all calendar sources - local notes, Google Calendar, CalDAV, and ICS feeds
 - **Privacy-First:** All reminder processing happens locally in your vault
 
-➡️ Enable notifications in Settings → General → Event Notifications
+➡️ Enable notifications in Settings → General → Event Notifications. [Learn more](user/features/reminders.md).
 
 ---
 

@@ -7,6 +7,79 @@ Corresponds to
 -   **For Dev**: `git tags` of the `main` branch
 
 
+## v0.13.4
+
+### New Features
+
+-   **[Unified Task Backlog Across Providers](user/features/tasks-backlog.md)** ([#275](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/275), [#290](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/290))  
+    _Rebuilt backlog as a provider-agnostic system that aggregates unscheduled tasks and supports direct scheduling workflows._  
+    - Shared backlog manager and UI for multiple providers  
+    - Drag-to-unschedule and drag-to-schedule interactions for faster task planning  
+    - Backlog date synchronization improvements when task dates are edited
+
+-   **[Google Tasks Provider (Two-Way Sync)](user/calendars/gtasks.md)** ([#288](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/288))  
+    _Added dedicated Google Tasks provider support with bi-directional scheduling and completion updates._  
+    - First-class provider configuration and auth-aware wiring  
+    - Backlog integration for undated Google Tasks  
+    - Improved consistency with local Tasks and CalDAV task flows
+
+-   **[Holidays Calendar Provider](user/calendars/holidays.md)** ([#281](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/281))  
+    _Introduced a configurable Holidays source for region-based holiday visibility in calendar views._
+
+-   **[Embedded Widgets and Codeblock Pipeline](user/embeds/index.md)** ([#281](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/281), [#315](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/315))  
+    _Added a unified embedded-widget architecture for calendar-driven blocks inside notes and dashboards._  
+    - Shared widget registration and query helper system  
+    - Embedded weather/backlog/analysis-oriented render paths  
+    - Improved embedded showcase and blueprint documentation
+
+-   **[Weather Forecast Expansion](user/features/weather.md)** ([#288](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/288), [#294](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/294))  
+    _Expanded weather forecasting UX with richer presentation and stronger caching/offline behavior._
+
+-   **[Event Recurrence Overrides for External Calendars](user/events/recurring.md)** ([#298](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/298))  
+    _Implemented deeper recurring-instance override behavior across remote providers (CalDAV, Google, Outlook, ICS)._  
+    - Better instance-level edit/delete semantics  
+    - Reminder synchronization consistency for overridden occurrences
+
+-   **[Live Preview Decorators](user/features/live-preview.md)** ([#281](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/281))  
+    _Introduced CodeMirror-based live decorators for event/task-related note workflows._
+
+-   **[Template-Driven Note Generation Improvements](user/features/templates.md)** ([#307](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/307))  
+    _Expanded template workflows for local notes and linked notes with cleaner rendering boundaries._
+
+-   **[Developer API & Local Server Enhancements](user/features/api.md)** ([#315](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/315))  
+    _Extended the API surface with stronger local-server and credential handling foundations for automation flows._
+
+-   **[Event Filtering & Sorting Engine](architecture/system/event-filtering-sorting.md)** ([#288](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/288))  
+    _Added centralized filtering/sorting orchestration to improve query consistency for views, embeds, and data consumers._
+
+
+### Improvements & Fixes
+
+-   **Task and Backlog Reliability Hardening** ([#313](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/313), [#314](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/314))  
+    _Preserved recurrence metadata during updates and improved cross-provider backlog date synchronization._
+
+-   **CalDAV Task Fetch + Sync Optimizations** ([#314](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/314))  
+    _Optimized VTODO retrieval and improved companion reminder-date synchronization on reschedule operations._
+
+-   **Linked Notes Stability Improvements** ([#289](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/289), [#304](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/304))  
+    _Fixed startup hydration races, duplicate-note edge cases, recurrence-linked note handling, and frontmatter serialization details._
+
+-   **Recurring Event Mutation Safety** ([#298](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/298), [#313](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/313))  
+    _Improved override mutation semantics and reduced metadata loss during edit flows._
+
+-   **Status Bar and Task Placement Fixes**  
+    _Resolved task placement and all-day/timezone status-bar handling regressions for improved daily reliability._
+
+-   **Settings Lifecycle and UI Consistency** ([#307](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/307))  
+    _Stabilized settings rendering lifecycle and reduced provider configuration edge-case inconsistencies._
+
+-   **Documentation and Architecture Expansion** ([#288](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/288), [#315](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/315))  
+    _Expanded user and architecture documentation for backlog architecture, embeds, API integration, filtering/sorting, and weather internals._
+
+
+---
+
+
 ## v0.13.2
 
 ### New Features

@@ -848,10 +848,8 @@ export class TasksPluginProvider
   }
 
   private getTaskPlanningDateTargets(): TasksDateTarget[] {
-    const {
-      backlogDateTarget,
-      calendarDisplayDateTarget
-    } = PluginState.getSettings().tasksIntegration;
+    const { backlogDateTarget, calendarDisplayDateTarget } =
+      PluginState.getSettings().tasksIntegration;
     return Array.from(new Set<TasksDateTarget>([calendarDisplayDateTarget, backlogDateTarget]));
   }
 

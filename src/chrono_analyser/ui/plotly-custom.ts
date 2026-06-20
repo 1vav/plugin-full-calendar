@@ -4,8 +4,7 @@
  *
  * @description
  * Creates a transparent Proxy for the `Plotly` object and manages local caching in the vault.
- * Ensures the Plotly.js charting package is completely excluded from compiled main.js bundle,
- * and once loaded, works 100% offline via local vault storage.
+ * Handles both bundled (Community) and dynamically loaded (Lean) configurations seamlessly.
  *
  * @license See LICENSE.md
  */
@@ -21,15 +20,21 @@ declare global {
   }
 }
 
+interface ImportModule {
+  default?: typeof PlotlyTypes;
+}
+
+let plotlyModule: typeof PlotlyTypes | null = null;
 let plotlyPromise: Promise<typeof PlotlyTypes> | null = null;
 
 /**
- * Triggers loading of the Plotly charting library from local cache, falling back to CDN.
- * Once fetched, it is cached permanently in the vault to support complete offline usage.
+ * Triggers loading of the Plotly charting library.
+ * Bundled via esbuild and dynamically imported here to support lazy loading.
+ * Falls back to local cached script loading if the bundled module is a stub (Lean build).
  */
 export async function ensurePlotlyLoaded(app: App): Promise<typeof PlotlyTypes> {
-  if (window.Plotly) {
-    return window.Plotly;
+  if (plotlyModule) {
+    return plotlyModule;
   }
 
   if (plotlyPromise) {
@@ -37,43 +42,50 @@ export async function ensurePlotlyLoaded(app: App): Promise<typeof PlotlyTypes> 
   }
 
   plotlyPromise = (async () => {
-    const filename = 'plotly-3.5.1.min.js';
-    const cdnUrl = 'https://cdn.plot.ly/plotly-3.5.1.min.js';
-
     try {
-      await loadCachedScript(app, filename, cdnUrl);
+      const module = await import('plotly.js');
+      if (process.env.BUILD_LEAN === 'true') {
+        // Fall back to dynamic script loading from cache/CDN (Lean build)
+        const filename = 'plotly-3.5.1.min.js';
+        const cdnUrl = 'https://cdn.plot.ly/plotly-3.5.1.min.js';
+        await loadCachedScript(app, filename, cdnUrl);
+        plotlyModule = window.Plotly || null;
+      } else {
+        const rawPlotly = (module as ImportModule).default || module;
+        plotlyModule = rawPlotly;
+        window.Plotly = plotlyModule;
+      }
+
+      if (!plotlyModule) {
+        throw new Error('Plotly loaded but module is not defined.');
+      }
+      return plotlyModule;
     } catch (err) {
       plotlyPromise = null; // Allow retry on failure
       throw err;
     }
-
-    const globalPlotly = window.Plotly;
-    if (!globalPlotly) {
-      plotlyPromise = null;
-      throw new Error('Plotly fetched but window.Plotly is not defined.');
-    }
-    return globalPlotly;
   })();
 
   return plotlyPromise;
 }
 
 /**
- * Transparent proxy that delegates all Plotly module operations to the global window.Plotly instance.
+ * Transparent proxy that delegates all Plotly module operations to the loaded Plotly instance.
  * Allows other chart files (like plotter.ts) to interact with Plotly statically.
  */
 const PlotlyProxy = new Proxy({} as typeof PlotlyTypes, {
   get(target, prop) {
-    const globalPlotly = window.Plotly;
-    if (!globalPlotly) {
+    const activePlotly = window.Plotly || plotlyModule;
+    if (!activePlotly) {
       throw new Error(
         'Plotly charting library is not loaded yet! Please await ensurePlotlyLoaded() first.'
       );
     }
 
-    const val = globalPlotly[prop as keyof typeof PlotlyTypes];
+    const activePlotlyObj = activePlotly as Record<string | symbol, unknown>;
+    const val = activePlotlyObj[prop];
     if (typeof val === 'function') {
-      return (val as (...args: unknown[]) => unknown).bind(globalPlotly);
+      return (val as (...args: unknown[]) => unknown).bind(activePlotly);
     }
     return val;
   }

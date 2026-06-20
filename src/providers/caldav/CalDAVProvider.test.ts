@@ -630,7 +630,9 @@ END:VCALENDAR`;
     await provider.unscheduleTask('task-1');
     await provider.scheduleTask('caldav::caldav_1::task-1', new Date(2026, 5, 16));
 
-    const putCalls = mockObsidianFetch.mock.calls.filter(([, options]) => options?.method === 'PUT');
+    const putCalls = mockObsidianFetch.mock.calls.filter(
+      ([, options]) => options?.method === 'PUT'
+    );
     const body = putCalls[1][1]?.body;
     if (typeof body !== 'string') {
       throw new Error('Expected CalDAV reschedule PUT body to be a string');
