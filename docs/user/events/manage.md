@@ -5,13 +5,14 @@ In addition to clicking on events to edit them directly, you can click-and-drag 
 ## Moving events
 
 Move an event around on a day or between days. This works just as well with all-day events.
-![](../../assets/events/moving-event.gif)
+
+![Moving event by dragging and dropping on calendar view](../../assets/events/moving-event.gif)
 
 ## Drag to change duration
 
 Drag the endpoint of event to change ending time
 
-![](../../assets/events/edit-event-drag.gif)
+![Changing event duration by dragging the bottom edge](../../assets/events/edit-event-drag.gif)
 
 ---
 
@@ -47,3 +48,15 @@ The Event Creation and Editing Modal has been redesigned to offer a modern, clea
 ## Moving between calendars
 
 - Currently, moving events is supported between Full Note calendars only. Moving to or from a Daily Note calendar is not supported.
+
+---
+
+## Video Conference & Linkification Support
+
+When clicking on an event to view its details, the Event Details modal automatically linkifies URLs to make them clickable:
+
+- **Universal Linkification**: Any valid HTTP/HTTPS URLs present in the event's `location` or `description` fields are rendered as clickable hyperlinks (`<a>` tags) instead of plain text, allowing you to open them directly in your default browser.
+- **Auto-Injection of Video Conference Links**: When syncing with remote calendars, video conference links (such as Google Meet, Zoom, Webex, Microsoft Teams, Jitsi, or Discord) are extracted from their API-specific structures (like Google's `conferenceData` or Outlook's `onlineMeetingUrl`) or parsed from iCalendar properties.
+  - If the event's `location` field is empty, the conference URL is stored directly in the `location` field.
+  - If the event's `location` is already filled (e.g. with a physical room), the meeting link is cleanly appended to the end of the `description` field prefixed with `meeting URL:`.
+

@@ -16,6 +16,19 @@ This page describes how settings are modeled and applied.
 - Features own their setting UI and behavior handlers.
 - Settings updates propagate to views, cache, and providers.
 - If a setting is exposed in more than one UI location, each control must write the same typed settings field and trigger the same downstream refresh path. For example, the Tasks backlog date-field selector in Settings and in the Tasks Backlog view both write `tasksIntegration.backlogDateTarget` and refresh backlog views through the provider registry.
+- **Open Daily Note on click**: The `openDailyNoteOnDateClick` setting enables/disables navigation from calendar header date labels and Month view day number links to Obsidian Daily Notes. The click handler stops event propagation to prevent triggering the month view create event modal.
+
+## Debounced Settings Save and Flush Lifecycle
+
+To optimize disk performance and prevent write race conditions on `data.json` during rapid inputs (e.g., text/textarea settings), the plugin uses a unified debouncing save queue in `PluginState`:
+
+- **Immediate Save (`PluginState.saveSettings(true)`)**: Cancels any scheduled debounced save and writes the settings to disk immediately.
+- **Debounced Save (`PluginState.saveSettings(false)`)**: Schedules a write to disk after 500ms of inactivity. Subsequent calls to debounced save reschedule the timer and coalesce the underlying promise so that the caller can wait for the actual file write.
+- **Save Flushing (`PluginState.flushDebouncedSave()`)**: Immediately triggers a save to disk if there is any scheduled save pending.
+
+This lifecycle is automatically integrated into the following unmount and closing points:
+- **Settings Tab Unmount**: `FullCalendarSettingTab.hide()` flushes any pending debounced save when the Obsidian settings tab is closed.
+- **Modals Close**: Settings modals (e.g., `TasksIntegrationSettingsModal`, `AvailabilitySettingsModal`) call `flushDebouncedSave()` inside their `onClose()` methods.
 
 ## Calendar Source Auto-Save
 

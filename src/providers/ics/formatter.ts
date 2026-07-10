@@ -102,6 +102,8 @@ function getRecurringEventRule(event: Extract<OFCEvent, { type: 'recurring' }>):
       S: 'SA'
     };
     parts.push('FREQ=WEEKLY', `BYDAY=${event.daysOfWeek.map(day => weekdays[day]).join(',')}`);
+  } else if (event.fcrDaily) {
+    parts.push('FREQ=DAILY');
   } else {
     parts.push('FREQ=DAILY');
   }
@@ -381,6 +383,23 @@ export function eventToIcs(event: OFCEvent): string {
 
   const sub = isTask(event) ? createVTodoComponent(event) : createVEventComponent(event);
   component.addSubcomponent(sub);
+
+  return (component as unknown as { toString(): string }).toString();
+}
+
+/**
+ * Converts multiple OFCEvents into a single ICS string.
+ */
+export function eventsToIcs(events: OFCEvent[]): string {
+  const component = new ical.Component('vcalendar');
+
+  component.addPropertyWithValue('version', '2.0');
+  component.addPropertyWithValue('prodid', '-//Obsidian Full Calendar Plugin//NONSGML v1.0//EN');
+
+  for (const event of events) {
+    const sub = isTask(event) ? createVTodoComponent(event) : createVEventComponent(event);
+    component.addSubcomponent(sub);
+  }
 
   return (component as unknown as { toString(): string }).toString();
 }

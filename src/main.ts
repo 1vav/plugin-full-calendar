@@ -18,6 +18,7 @@ import { NotificationManager } from './features/notifications/NotificationManage
 import { FcrReminderManager } from './features/fcr_reminder/FcrReminderManager';
 import { StatusBarManager } from './features/statusbar/StatusBarManager';
 import { LazySettingsTab } from './ui/settings/LazySettingsTab';
+import { BreakTimerManager } from './features/break_timer/BreakTimerManager';
 import { migrateAndSanitizeSettings } from './ui/settings/utilsSettings';
 import { PLUGIN_SLUG } from './types';
 import { DEPRECATED_PROVIDERS } from './ui/settings/deprecations';
@@ -57,6 +58,7 @@ export default class FullCalendarPlugin extends Plugin {
   #notificationManager!: NotificationManager;
   #statusBarManager!: StatusBarManager;
   #fcrReminderManager!: FcrReminderManager;
+  #breakTimerManager!: BreakTimerManager;
 
   #isMobile: boolean = false;
   #settingsTab?: LazySettingsTab;
@@ -166,13 +168,7 @@ export default class FullCalendarPlugin extends Plugin {
     PluginState.getCache().reset();
     PluginState.getCache().listenForSettingsChanges(this.app.workspace);
 
-    // Start NotificationManager after providerRegistry is initialized
-    this.#notificationManager = new NotificationManager(this);
-    this.#notificationManager.update(PluginState.getSettings());
-    this.#statusBarManager = new StatusBarManager(this);
-    this.#statusBarManager.update(PluginState.getSettings());
-    this.#fcrReminderManager = new FcrReminderManager(this);
-    this.#fcrReminderManager.update(PluginState.getSettings());
+    // Start non-critical managers after startup to avoid blocking the main thread
     type WorkspaceEvents = Workspace & {
       on: Workspace['on'] &
         ((
@@ -186,24 +182,44 @@ export default class FullCalendarPlugin extends Plugin {
     };
 
     const workspaceEvents = this.app.workspace as WorkspaceEvents;
-    this.registerEvent(
-      workspaceEvents.on(
-        'full-calendar:settings-updated',
-        this.#notificationManager.update.bind(this.#notificationManager)
-      )
-    );
-    this.registerEvent(
-      workspaceEvents.on(
-        'full-calendar:settings-updated',
-        this.#statusBarManager.update.bind(this.#statusBarManager)
-      )
-    );
-    this.registerEvent(
-      workspaceEvents.on(
-        'full-calendar:settings-updated',
-        this.#fcrReminderManager.update.bind(this.#fcrReminderManager)
-      )
-    );
+
+    const initManagers = () => {
+      this.#notificationManager = new NotificationManager(this);
+      this.#notificationManager.update(PluginState.getSettings());
+      this.#statusBarManager = new StatusBarManager(this);
+      this.#statusBarManager.update(PluginState.getSettings());
+      this.#fcrReminderManager = new FcrReminderManager(this);
+      this.#fcrReminderManager.update(PluginState.getSettings());
+      this.#breakTimerManager = new BreakTimerManager(this);
+      this.#breakTimerManager.update(PluginState.getSettings());
+
+      this.registerEvent(
+        workspaceEvents.on('full-calendar:settings-updated', (settings: FullCalendarSettings) =>
+          this.#notificationManager?.update(settings)
+        )
+      );
+      this.registerEvent(
+        workspaceEvents.on('full-calendar:settings-updated', (settings: FullCalendarSettings) =>
+          this.#statusBarManager?.update(settings)
+        )
+      );
+      this.registerEvent(
+        workspaceEvents.on('full-calendar:settings-updated', (settings: FullCalendarSettings) =>
+          this.#fcrReminderManager?.update(settings)
+        )
+      );
+      this.registerEvent(
+        workspaceEvents.on('full-calendar:settings-updated', (settings: FullCalendarSettings) =>
+          this.#breakTimerManager?.update(settings)
+        )
+      );
+    };
+
+    if (typeof requestIdleCallback !== 'undefined') {
+      window.requestIdleCallback(() => initManagers(), { timeout: 1000 });
+    } else {
+      window.setTimeout(() => initManagers(), 50);
+    }
     this.registerEvent(
       workspaceEvents.on(
         'full-calendar:settings-updated',
@@ -298,6 +314,23 @@ export default class FullCalendarPlugin extends Plugin {
       }
     });
     this.addCommand({
+      id: 'full-calendar-share-availability',
+      name: t('commands.shareAvailability') || 'Share Availability',
+      callback: async () => {
+        const { AvailabilityShareModal } =
+          await import('./features/availability/AvailabilityShareModal');
+        new AvailabilityShareModal(this.app).open();
+      }
+    });
+    this.addCommand({
+      id: 'full-calendar-export-cache-ics',
+      name: t('commands.exportIcs') || 'Export Event Cache as ICS file',
+      callback: async () => {
+        const { IcsExportModal } = await import('./features/export/IcsExportModal');
+        new IcsExportModal(this.app).open();
+      }
+    });
+    this.addCommand({
       id: 'full-calendar-reset',
       name: t('commands.resetCache'),
       callback: () => {
@@ -305,6 +338,13 @@ export default class FullCalendarPlugin extends Plugin {
         this.app.workspace.detachLeavesOfType(FULL_CALENDAR_VIEW_TYPE);
         this.app.workspace.detachLeavesOfType(FULL_CALENDAR_SIDEBAR_VIEW_TYPE);
         showNotice(t('notices.cacheReset'));
+      }
+    });
+    this.addCommand({
+      id: 'full-calendar-trigger-break-timer',
+      name: 'Trigger break timer overlay',
+      callback: () => {
+        this.#breakTimerManager.triggerBreak();
       }
     });
     this.addCommand({
@@ -449,6 +489,9 @@ export default class FullCalendarPlugin extends Plugin {
     }
     if (this.#fcrReminderManager) {
       this.#fcrReminderManager.unload();
+    }
+    if (this.#breakTimerManager) {
+      this.#breakTimerManager.unload();
     }
     PluginState.getProviderRegistry().stopListening();
     PluginState.getCache().stopListening();

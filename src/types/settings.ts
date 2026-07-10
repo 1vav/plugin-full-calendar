@@ -236,9 +236,28 @@ export interface FullCalendarSettings {
   weatherInputMode: 'city' | 'coords';
   weatherUnit?: 'C' | 'F';
   useLegacyPlaintextCredentials: boolean;
+  githubToken: string | null;
+  availabilityGistId: string | null;
+  availabilityExportPath: string;
+  icsExportPath: string;
+  breakTimer: BreakTimerSettings;
+  availabilityDefaultTimeRange: { startTime: string; endTime: string };
+  openDailyNoteOnDateClick: boolean;
+}
+
+export interface BreakTimerSettings {
+  enabled: boolean;
+  intervalMins: number;
+  idleThresholdMins: number;
+  breakDurationSecs: number;
 }
 
 export const DEFAULT_SETTINGS: FullCalendarSettings = {
+  githubToken: null,
+  availabilityGistId: null,
+  availabilityExportPath: '',
+  icsExportPath: '',
+  availabilityDefaultTimeRange: { startTime: '09:00', endTime: '17:00' },
   useLegacyPlaintextCredentials: false,
   calendarSources: [],
   defaultCalendar: 0,
@@ -336,7 +355,14 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
   weatherInputMode: 'city',
   weatherUnit: 'C',
   linkedNoteTemplate:
-    '# {{title}}\n\n**Date**: {{date}}\n**Time**: {{timeString}}\n**Location**: {{location}}\n**Calendar**: {{calendarName}}\n\n## Description\n{{description}}\n\n## Notes\n- '
+    '# {{title}}\n\n**Date**: {{date}}\n**Time**: {{timeString}}\n**Location**: {{location}}\n**Calendar**: {{calendarName}}\n\n## Description\n{{description}}\n\n## Notes\n- ',
+  openDailyNoteOnDateClick: false,
+  breakTimer: {
+    enabled: false,
+    intervalMins: 60,
+    idleThresholdMins: 30,
+    breakDurationSecs: 30
+  }
 };
 
 // Utility functions for workspace management

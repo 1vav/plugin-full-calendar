@@ -339,6 +339,12 @@ export class FullCalendarSettingTab extends PluginSettingTab {
     this.reactRoots = [];
   }
 
+  hide(): void {
+    void PluginState.flushDebouncedSave();
+    this.unmountReactRoots();
+    super.hide();
+  }
+
   display(): void {
     this.renderSettings();
   }
@@ -686,18 +692,26 @@ export class FullCalendarSettingTab extends PluginSettingTab {
   ): Promise<void> {
     switch (categoryId) {
       case 'general': {
-        const [{ renderGeneralSettings }, { renderRemindersSettings }, { renderWhatsNew }] =
-          await Promise.all([
-            import('./sections/renderGeneral'),
-            import('../../features/notifications/ui/renderReminders'),
-            import('./changelogs/renderWhatsNew')
-          ]);
+        const [
+          { renderGeneralSettings },
+          { renderRemindersSettings },
+          { renderWhatsNew },
+          { renderBreakTimerSettings }
+        ] = await Promise.all([
+          import('./sections/renderGeneral'),
+          import('../../features/notifications/ui/renderReminders'),
+          import('./changelogs/renderWhatsNew'),
+          import('../../features/break_timer/ui/renderBreakTimerSettings')
+        ]);
 
         this._renderInitialSetupNotice(containerEl);
         renderGeneralSettings(containerEl, this.plugin, () => {
           this.renderSettings();
         });
         renderRemindersSettings(containerEl, this.plugin, () => {
+          this.renderSettings();
+        });
+        renderBreakTimerSettings(containerEl, this.plugin, () => {
           this.renderSettings();
         });
         renderWhatsNew(containerEl, this, () => {
@@ -749,7 +763,9 @@ export class FullCalendarSettingTab extends PluginSettingTab {
           { renderTaskNotesIntegrationSettings },
           { renderApiAccessSettings },
           { renderFcrReminderSettings },
-          { renderCredentialsSettings }
+          { renderCredentialsSettings },
+          { renderAvailabilitySettings },
+          { renderExportSettings }
         ] = await Promise.all([
           import('../../features/activitywatch/ui/renderActivityWatch'),
           import('../../providers/google/ui/renderGoogle'),
@@ -758,10 +774,20 @@ export class FullCalendarSettingTab extends PluginSettingTab {
           import('../../providers/tasknotes/renderTaskNotesIntegration'),
           import('./sections/renderApiAccess'),
           import('../../features/fcr_reminder/ui/renderFcrReminder'),
-          import('../../features/credentials/ui/renderCredentialsSettings')
+          import('../../features/credentials/ui/renderCredentialsSettings'),
+          import('../../features/availability/ui/AvailabilitySettings'),
+          import('../../features/export/ui/renderExportSettings')
         ]);
 
         renderCredentialsSettings(containerEl, () => {
+          this.renderSettings();
+        });
+
+        renderAvailabilitySettings(containerEl, this.plugin, () => {
+          this.renderSettings();
+        });
+
+        renderExportSettings(containerEl, this.plugin, () => {
           this.renderSettings();
         });
 

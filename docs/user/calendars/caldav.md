@@ -15,6 +15,7 @@ Calendars are automatically re-fetched from their source at most every five minu
 ## Two-Way Sync and Timezone Behavior
 
 - **Two-Way Sync:** CalDAV calendars now support full two-way synchronization. Changes made in Obsidian are pushed to the server, and remote changes are pulled in periodically.
+- **Video Conferencing & Links:** Automatically parses the RFC 7986 `CONFERENCE` property and Microsoft Teams/Skype meeting URLs, mapping them into the event's location or description. All meeting links and general URLs are rendered as clickable hyperlinks in the [Event Details modal](../events/manage.md#video-conference--linkification-support). For details, see [Video Conference & Linkification Support](../events/manage.md#video-conference--linkification-support).
 - **Task Support (VTODO):** CalDAV calendars support synchronizing tasks (`VTODO` components) in addition to events (`VEVENT`). Completed tasks are synchronized with their completion timestamps, while pending/active tasks are managed with the `NEEDS-ACTION` status. Time-based, all-day, and recurring tasks are fully supported.
 - **Timezones:** Events and tasks are parsed with their source timezone and converted to your Display Timezone for viewing.
 - **Cancellations:** Cancellations/exceptions present on the server are respected.
@@ -61,7 +62,7 @@ Your URL should look something like this:
 `https://p37-caldav.icloud.com/8172357017/calendars/2AC2AE2B4-94BE-4DB8-9078-C6907C5E3388`
 
 
-![](../../assets/calendars/sync-setup-caldav.gif)
+![iCloud CalDAV sync setup workflow](../../assets/calendars/sync-setup-caldav.gif)
 
 > Thanks to [@FlyByNite17](https://github.com/FlyByNite17) ([Issue #211](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/211)) for the iCloud url docs.
 
@@ -96,8 +97,8 @@ If in doubt, you can find the specific URL by navigating to `Settings` -> `Calen
 
 Under `CalDAV URL`, you can copy the URL but make sure you **only** copy up to the trailing slash after your email address as shown in the codeblock just above.
 
-![](../../assets/calendars/fastmail-url.png)
+![Fastmail export settings showing CalDAV URL path](../../assets/calendars/fastmail-url.png)
 
 ### Flythrough
 
-![](../../assets/calendars/sync-setup-fastmail.gif)
+![Fastmail CalDAV setup walkthrough in plugin settings](../../assets/calendars/sync-setup-fastmail.gif)

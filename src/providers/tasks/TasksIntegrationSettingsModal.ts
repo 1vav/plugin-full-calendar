@@ -28,7 +28,8 @@ export class TasksIntegrationSettingsModal extends Modal {
           .addOption('dueDate', t('settings.tasksIntegration.backlogDateTarget.due'))
           .setValue(settings.backlogDateTarget)
           .onChange(async value => {
-            settings.backlogDateTarget = value as TasksBacklogDateTarget;
+            PluginState.getSettings().tasksIntegration.backlogDateTarget =
+              value as TasksBacklogDateTarget;
             await PluginState.saveSettings();
             PluginState.getProviderRegistry().refreshBacklogViews();
             this.onChange();
@@ -45,7 +46,8 @@ export class TasksIntegrationSettingsModal extends Modal {
           .addOption('dueDate', t('settings.tasksIntegration.backlogDateTarget.due'))
           .setValue(settings.calendarDisplayDateTarget)
           .onChange(async value => {
-            settings.calendarDisplayDateTarget = value as TasksDateTarget;
+            PluginState.getSettings().tasksIntegration.calendarDisplayDateTarget =
+              value as TasksDateTarget;
             await PluginState.saveSettings();
             this.onChange();
           });
@@ -56,7 +58,7 @@ export class TasksIntegrationSettingsModal extends Modal {
       .setDesc(t('settings.tasksIntegration.openEditModalAfterBacklogDrop.description'))
       .addToggle(toggle => {
         toggle.setValue(settings.openEditModalAfterBacklogDrop).onChange(async value => {
-          settings.openEditModalAfterBacklogDrop = value;
+          PluginState.getSettings().tasksIntegration.openEditModalAfterBacklogDrop = value;
           await PluginState.saveSettings();
           this.onChange();
         });
@@ -67,7 +69,7 @@ export class TasksIntegrationSettingsModal extends Modal {
       .setDesc(t('settings.tasksIntegration.includeGlobalQueryInBacklog.description'))
       .addToggle(toggle => {
         toggle.setValue(settings.includeGlobalQueryInBacklog ?? false).onChange(async value => {
-          settings.includeGlobalQueryInBacklog = value;
+          PluginState.getSettings().tasksIntegration.includeGlobalQueryInBacklog = value;
           await PluginState.saveSettings();
           PluginState.getProviderRegistry().refreshBacklogViews();
           this.onChange();
@@ -81,11 +83,13 @@ export class TasksIntegrationSettingsModal extends Modal {
         text
           .setPlaceholder(t('settings.tasksIntegration.backlogQuery.placeholder'))
           .setValue(settings.backlogQuery ?? '')
-          .onChange(async value => {
-            settings.backlogQuery = value;
-            await PluginState.saveSettings();
-            PluginState.getProviderRegistry().refreshBacklogViews();
-            this.onChange();
+          .onChange(value => {
+            PluginState.getSettings().tasksIntegration.backlogQuery = value;
+            void (async () => {
+              await PluginState.saveSettings(false);
+              PluginState.getProviderRegistry().refreshBacklogViews();
+              this.onChange();
+            })();
           });
         text.inputEl.rows = 6;
         text.inputEl.cols = 50;
@@ -101,7 +105,8 @@ export class TasksIntegrationSettingsModal extends Modal {
           .addOption('dayPlanner', t('settings.tasksIntegration.taskDisplayFormat.dayPlanner'))
           .setValue(settings.taskDisplayFormat ?? 'dayPlanner')
           .onChange(async value => {
-            settings.taskDisplayFormat = value as TasksDisplayFormat;
+            PluginState.getSettings().tasksIntegration.taskDisplayFormat =
+              value as TasksDisplayFormat;
             await PluginState.saveSettings();
             this.onChange();
           });
@@ -109,6 +114,7 @@ export class TasksIntegrationSettingsModal extends Modal {
   }
 
   onClose(): void {
+    void PluginState.flushDebouncedSave();
     this.contentEl.empty();
   }
 }
