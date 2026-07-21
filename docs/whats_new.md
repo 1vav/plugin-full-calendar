@@ -4,6 +4,33 @@ This page highlights the latest **major features and improvements** to help you 
 For a detailed version-by-version breakdown, see the [Changelog](changelog.md).
 
 
+## 🌍 Availability Sharing and ICS Export Filters
+
+Share your free/busy schedule without exposing your personal calendars.
+
+*   **Markdown Export**: Save a neatly formatted availability note directly into your vault.
+*   **Secret Web Viewer**: Publish a client-side GitHub Gist link for collaborators to view your schedule.
+*   **Private by Design**: Only anonymous slot data is uploaded when you choose web sharing.
+*   **Date Ranges**: Export all events or restrict the output to a specific start and end window.
+*   **Time and Day Filters**: Filter by daily time range, optionally exclude weekends, and skip all-day items when needed.
+*   **Category Selection**: Include only the categories you want, dynamically pulled from your event cache.
+
+➡️ Learn more in **[Availability Sharing](user/features/availability.md)** and **[ICS Export](user/features/ics-export.md)**.
+
+---
+
+## 📱 Mobile UX Refresh
+
+The mobile calendar experience is now easier to navigate on smaller screens.
+
+*   **Compact Month View**: Month cells use smaller event indicators to reduce clutter.
+*   **Pinch-to-Zoom**: Supported day and 3-day views accept pinch gestures for faster density changes.
+*   **Safer Layout Switching**: Mobile layout controls moved into the More menu to avoid toolbar overflow.
+
+➡️ Learn more in **[Interactions](user/features/interactions.md)**.
+
+---
+
 ## ✅ Google Tasks Integration
 
 Full Calendar now includes first-class **Google Tasks** support, so task planning can sit beside event planning in the same workspace.

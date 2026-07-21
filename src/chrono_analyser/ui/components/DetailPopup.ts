@@ -80,14 +80,9 @@ export class DetailPopup {
 
     const createStatCard = (value: string, label: string) => {
       if (typeof this.statsEl.createDiv !== 'function') {
-        const wrapper = this.statsEl.ownerDocument.createElement('div');
-        wrapper.className = 'summary-stat';
-        const valEl = this.statsEl.ownerDocument.createElement('div');
-        valEl.className = 'summary-stat-value';
-        valEl.textContent = value;
-        const labelEl = this.statsEl.ownerDocument.createElement('div');
-        labelEl.className = 'summary-stat-label';
-        labelEl.textContent = label;
+        const wrapper = createDiv({ cls: 'summary-stat' });
+        const valEl = createDiv({ cls: 'summary-stat-value', text: value });
+        const labelEl = createDiv({ cls: 'summary-stat-label', text: label });
         wrapper.appendChild(valEl);
         wrapper.appendChild(labelEl);
         this.statsEl.appendChild(wrapper);

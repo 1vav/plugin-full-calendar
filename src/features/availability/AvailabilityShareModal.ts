@@ -73,7 +73,7 @@ export class AvailabilityShareModal extends Modal {
       updateRangeWarning();
     });
 
-    dateSetting.controlEl.createEl('span', { cls: 'ofc-range-separator' });
+    dateSetting.controlEl.createSpan({ cls: 'ofc-range-separator' });
 
     const endDateInput = dateSetting.controlEl.createEl('input', { attr: { type: 'date' } });
     endDateInput.value = this.endDateVal;
@@ -131,7 +131,7 @@ export class AvailabilityShareModal extends Modal {
       this.startTimeVal = (e.target as HTMLInputElement).value;
     });
 
-    timeSetting.controlEl.createEl('span', { cls: 'ofc-range-separator' });
+    timeSetting.controlEl.createSpan({ cls: 'ofc-range-separator' });
 
     const endTimeInput = timeSetting.controlEl.createEl('input', { attr: { type: 'time' } });
     endTimeInput.value = this.endTimeVal;

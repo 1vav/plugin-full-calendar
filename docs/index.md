@@ -9,7 +9,7 @@ With Full Calendar, you can connect to [local note-based calendars](user/calenda
 
 If you are new here or is looking for workflow guide head to [User Docs](user/index.md) / use the Search bar above (or press `S`), while if you are a veteran who wants to contribute or is just crazy to find joy in reading the core architecture jump to [Architecture Docs](architecture/system/index.md).
 
-The latest release, **0.13.4**, focuses on practical planning upgrades: a **[unified task backlog](user/features/tasks-backlog.md)** across providers, first-class **[Google Tasks integration](user/calendars/gtasks.md)**, configurable **[Holidays calendars](user/calendars/holidays.md)**, richer **[Embedded Calendars](user/embeds/index.md)**, and stronger day-to-day reliability for recurring and task workflows.
+The latest release, **0.13.5**, expands the planning surface with **[Availability Sharing](user/features/availability.md)**, richer **[ICS Export](user/features/ics-export.md)** filters, **[Event Linked Notes](user/features/event-linked-notes.md)** presets and faster open-or-create flows, a refreshed **mobile UX**, and safer Google account scope handling alongside the existing **[unified task backlog](user/features/tasks-backlog.md)** and **[Google Tasks integration](user/calendars/gtasks.md)**.
 
 For the most useful highlights and setup guidance, see **[What's New](whats_new.md)**. For complete version-by-version detail, see the **[Changelog](changelog.md)**.
 

@@ -16,46 +16,45 @@ export function queueMilestoneToast(milestone: NewlyUnlockedMilestone, index: nu
     }
 
     const existingRoot = doc.getElementById('ofc-milestone-toast-root');
-    const root = existingRoot ?? doc.createElement('div');
+    const root = existingRoot ?? createDiv({ attr: { id: 'ofc-milestone-toast-root' } });
     if (!existingRoot) {
-      root.id = 'ofc-milestone-toast-root';
       doc.body.appendChild(root);
     }
 
-    const toast = doc.createElement('div');
-    toast.className = 'ofc-milestone-toast';
+    const toast = createDiv({ cls: 'ofc-milestone-toast' });
 
-    const closeBtn = doc.createElement('button');
-    closeBtn.className = 'ofc-milestone-toast-close';
+    const closeBtn = createEl('button', { cls: 'ofc-milestone-toast-close' });
     closeBtn.setAttribute('aria-label', 'Close notification');
     setIcon(closeBtn, 'x');
 
-    const titleEl = doc.createElement('div');
-    titleEl.className = 'ofc-milestone-toast-title';
-    titleEl.textContent = milestone.title;
+    const titleEl = createDiv({
+      cls: 'ofc-milestone-toast-title',
+      text: milestone.title
+    });
 
-    const bodyEl = doc.createElement('div');
-    bodyEl.className = 'ofc-milestone-toast-body';
-    bodyEl.textContent = milestone.description;
+    const bodyEl = createDiv({
+      cls: 'ofc-milestone-toast-body',
+      text: milestone.description
+    });
 
     toast.appendChild(closeBtn);
     toast.appendChild(titleEl);
     toast.appendChild(bodyEl);
 
     // Create Sponsorship/Ethics Support Footer
-    const footerEl = doc.createElement('div');
-    footerEl.className = 'ofc-milestone-toast-footer';
+    const footerEl = createDiv({ cls: 'ofc-milestone-toast-footer' });
 
-    const footerDesc = doc.createElement('div');
-    footerDesc.className = 'ofc-milestone-toast-footer-desc';
-    footerDesc.textContent = t('notices.milestones.sponsorDesc');
+    const footerDesc = createDiv({
+      cls: 'ofc-milestone-toast-footer-desc',
+      text: t('notices.milestones.sponsorDesc')
+    });
 
-    const buttonsWrap = doc.createElement('div');
-    buttonsWrap.className = 'ofc-milestone-toast-footer-buttons';
+    const buttonsWrap = createDiv({ cls: 'ofc-milestone-toast-footer-buttons' });
 
-    const sponsorBtn = doc.createElement('a');
-    sponsorBtn.className = 'ofc-milestone-toast-btn btn-primary';
-    sponsorBtn.textContent = t('notices.milestones.sponsorBtn');
+    const sponsorBtn = createEl('a', {
+      cls: 'ofc-milestone-toast-btn btn-primary',
+      text: t('notices.milestones.sponsorBtn')
+    });
     sponsorBtn.setAttribute(
       'href',
       'https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/donation/ko-fi'
@@ -63,9 +62,10 @@ export function queueMilestoneToast(milestone: NewlyUnlockedMilestone, index: nu
     sponsorBtn.setAttribute('target', '_blank');
     sponsorBtn.setAttribute('rel', 'noopener noreferrer');
 
-    const goalBtn = doc.createElement('a');
-    goalBtn.className = 'ofc-milestone-toast-btn btn-secondary';
-    goalBtn.textContent = t('notices.milestones.goalBtn');
+    const goalBtn = createEl('a', {
+      cls: 'ofc-milestone-toast-btn btn-secondary',
+      text: t('notices.milestones.goalBtn')
+    });
     goalBtn.setAttribute(
       'href',
       'https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/SustainabilityEthics/'

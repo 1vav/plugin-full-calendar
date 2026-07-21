@@ -16,12 +16,10 @@ export function showBreakTimerOverlay(
   const app = plugin.app;
 
   // Create overlay container
-  const overlay = doc.createElement('div');
-  overlay.className = 'ofc-break-timer-overlay';
+  const overlay = doc.createDiv({ cls: 'ofc-break-timer-overlay' });
 
   // Video element
-  const video = doc.createElement('video');
-  video.className = 'ofc-break-timer-video';
+  const video = createEl('video', { cls: 'ofc-break-timer-video' });
   video.autoplay = true;
   video.muted = true;
   video.playsInline = true;
@@ -70,13 +68,11 @@ export function showBreakTimerOverlay(
   void loadVideos();
 
   // Bottom controls container
-  const controls = doc.createElement('div');
-  controls.className = 'ofc-break-timer-controls';
+  const controls = doc.createDiv({ cls: 'ofc-break-timer-controls' });
   overlay.appendChild(controls);
 
   // Countdown text
-  const countdown = doc.createElement('div');
-  countdown.className = 'ofc-break-timer-countdown';
+  const countdown = doc.createDiv({ cls: 'ofc-break-timer-countdown' });
   controls.appendChild(countdown);
 
   let secondsLeft = durationSecs;
@@ -107,9 +103,10 @@ export function showBreakTimerOverlay(
   }, 1000);
 
   // Close / Skip Button
-  const button = doc.createElement('button');
-  button.className = 'ofc-break-timer-close-btn';
-  button.innerText = 'Shoo cat';
+  const button = createEl('button', {
+    cls: 'ofc-break-timer-close-btn',
+    text: 'Shoo cat'
+  });
   controls.appendChild(button);
 
   const cleanup = () => {

@@ -36,6 +36,11 @@ export default tseslint.config(
             'obsidianmd/no-nodejs-modules': 'off',
             // Tests run in Node and may use test harness globals instead of Obsidian's active document.
             'obsidianmd/prefer-active-doc': 'off',
+            'obsidianmd/prefer-create-el': 'off',
+            'eslint-comments/require-description': 'off',
+            'eslint-comments/disable-enable-pair': 'off',
+            'eslint-comments/no-restricted-disable': 'off',
+            'eslint-comments/no-use': 'off',
             'no-restricted-properties': [
                 'error',
                 {

@@ -69,7 +69,7 @@ export class AvailabilitySettingsModal extends Modal {
     const privacyLinksDiv = privacyDescEl.createDiv();
     privacyLinksDiv.setCssProps({ marginTop: '6px' });
 
-    privacyLinksDiv.createEl('span', {
+    privacyLinksDiv.createSpan({
       text: `${t('availability.settings.cleanupTokenHelp')} `
     });
 

@@ -1,5 +1,35 @@
 [
   {
+    "version": "0.12.9",
+    "changes": [
+      {
+        "type": "new",
+        "title": "ActivityWatch sync",
+        "description": "Added a dedicated ActivityWatch sync engine with continuity-aware ingestion, auto-sync scheduling, and title templating."
+      },
+      {
+        "type": "improvement",
+        "title": "Tasks integrations",
+        "description": "Checkout [Tasks Integration docs](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/tasks-plugin-integration/). Expanded Tasks backlog and display settings, plus payload handling and workflow improvements. ([#142](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/142), [#166](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/166), [#175](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/175))"
+      },
+      {
+        "type": "improvement",
+        "title": "Core sync identity",
+        "description": "Switched sync handling to keyed identity diffs with reverse lookup maps and safer continuity replacement to reduce churn and duplicate blocks."
+      },
+      {
+        "type": "improvement",
+        "title": "Settings and calendar UX",
+        "description": "Updated settings navigation, calendar interactions, search behavior, and mobile responsiveness."
+      },
+      {
+        "type": "fix",
+        "title": "Build, docs, and i18n",
+        "description": "Reduced startup and bundle overhead, refreshed locale loading, and added ActivityWatch architecture documentation."
+      }
+    ]
+  },
+  {
     "version": "0.12.8",
     "changes": [
       {

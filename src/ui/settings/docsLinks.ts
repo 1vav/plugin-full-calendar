@@ -5,7 +5,6 @@
  */
 
 import { t } from '../../features/i18n/i18n';
-import { activeDocument, activeWindow } from 'obsidian';
 import {
   createLinksFragment,
   createMarkdownLinksFragment,
@@ -28,15 +27,11 @@ export function createDocsLinksFragment(
   links: DocsLink[],
   prefix = t('global.learnMore')
 ): DocumentFragment {
-  const doc = activeDocument ?? activeWindow?.document ?? window.document;
-  if (!doc) {
-    return new DocumentFragment();
-  }
   if (links.length === 0) {
-    return doc.createDocumentFragment();
+    return createFragment();
   }
 
-  const fragment = doc.createDocumentFragment();
+  const fragment = createFragment();
   fragment.append(prefix, ' ');
 
   const linkItems: LinkItem[] = links.map(link => ({
@@ -49,11 +44,7 @@ export function createDocsLinksFragment(
 }
 
 export function createDescWithDocs(description: string, links: DocsLink[]): DocumentFragment {
-  const doc = activeDocument ?? activeWindow?.document ?? window.document;
-  if (!doc) {
-    return createMarkdownLinksFragment(description);
-  }
-  const fragment = doc.createDocumentFragment();
+  const fragment = createFragment();
   fragment.append(createMarkdownLinksFragment(description));
   if (links.length > 0) {
     fragment.append(' ');

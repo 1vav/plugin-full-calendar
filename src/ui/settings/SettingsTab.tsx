@@ -21,11 +21,11 @@ import {
   App,
   DropdownComponent,
   PluginSettingTab,
+  SettingDefinitionItem,
   setIcon,
   Setting,
   TFile,
-  TFolder,
-  activeDocument
+  TFolder
 } from 'obsidian';
 
 import ReactModal from '../ReactModal';
@@ -345,6 +345,10 @@ export class FullCalendarSettingTab extends PluginSettingTab {
     super.hide();
   }
 
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [];
+  }
+
   display(): void {
     this.renderSettings();
   }
@@ -657,8 +661,7 @@ export class FullCalendarSettingTab extends PluginSettingTab {
     }
 
     const regex = new RegExp(`(${escapedTokens.join('|')})`, 'gi');
-    const doc: Document = activeDocument;
-    const fragment = doc.createDocumentFragment();
+    const fragment = createFragment();
     let lastIndex = 0;
 
     for (const match of rawText.matchAll(regex)) {
@@ -672,8 +675,7 @@ export class FullCalendarSettingTab extends PluginSettingTab {
         fragment.append(rawText.slice(lastIndex, matchIndex));
       }
 
-      const markEl = doc.createElement('mark');
-      markEl.textContent = matchText;
+      const markEl = createEl('mark', { text: matchText });
       fragment.append(markEl);
       lastIndex = matchIndex + matchText.length;
     }

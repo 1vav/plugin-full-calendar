@@ -157,8 +157,7 @@ export class InsightsRenderer {
 
   private createGraphButton(action: FilterPayload | null): HTMLButtonElement | null {
     if (!action) return null;
-    const button = this.containerEl.ownerDocument.createElement('button');
-    button.className = 'insight-action-button clickable-icon';
+    const button = createEl('button', { cls: 'insight-action-button clickable-icon' });
 
     button.setAttribute('aria-label', 'View in chart');
     setIcon(button, 'bar-chart-horizontal');

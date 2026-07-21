@@ -7,9 +7,50 @@ Corresponds to
 -   **For Dev**: `git tags` of the `main` branch
 
 
-## v0.13.4
+## v0.13.5
 
 ### New Features
+
+-   **[Availability Sharing](user/features/availability.md)** ([#330](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/330), [#337](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/337))
+    _Added a local markdown export flow and a client-side GitHub Gist viewer for publishing secure free/busy schedules._
+    - [Availability Sharing Guide](user/features/availability.md)
+    - [Availability Sharing Architecture](architecture/system/features/availability-architecture.md)
+
+-   **[Break Timer](user/features/break-timer.md)** ([#330](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/330))
+    _Introduced a system-wide idle timer and fullscreen wellness overlay for healthier long-session workflows._
+    - [Break Timer Guide](user/features/break-timer.md)
+    - [Break Timer Architecture](architecture/system/features/break-timer-architecture.md)
+
+-   **[ICS Export](user/features/ics-export.md)** ([#330](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/330), [#337](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/337))
+    _Expanded ICS export with date-range selection, daily time filtering, weekend/all-day controls, and dynamic category filtering._
+    - [ICS Export Guide](user/features/ics-export.md)
+    - [ICS Export Architecture](architecture/system/features/ics-export-architecture.md)
+
+-   **[Event Linked Notes](user/features/event-linked-notes.md)** ([#333](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/333), [#337](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/337))
+    _Template presets now preserve custom frontmatter, linked notes reuse open tabs, and create-or-open actions are available from the popup, click, and context menu._
+    - [Event Linked Notes Guide](user/features/event-linked-notes.md)
+    - [Event Linked Notes Architecture](architecture/system/features/event-linked-notes.md)
+
+-   **[Mobile UX Refresh](user/features/interactions.md)** ([#326](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/326), [#337](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/337))
+    _Month view is more compact, supported time-grid views pinch-to-zoom, and mobile layout switching moved into the More menu._
+    - [Interactions and Gestures](user/features/interactions.md)
+
+-   **[Google Scope Preservation](user/calendars/gcal.md), [Google Tasks](user/calendars/gtasks.md)** ([#332](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/332), [#337](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/337))
+    _Google Calendar and Google Tasks now preserve merged OAuth scopes when accounts are reauthorized, so the two providers continue to coexist on the same account._
+    - [Google Calendar Guide](user/calendars/gcal.md)
+    - [Google Tasks Guide](user/calendars/gtasks.md)
+
+### Improvements & Fixes
+
+-   **Linked Notes Stability Improvements** ([#333](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/333), [#337](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/337))
+    _Kept preset frontmatter intact while still merging managed identity fields, and preserved the open-or-create tab reuse flow across popup, click, and context-menu entry points._
+
+-   **Availability / Export UI Refinements** ([#337](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/337))
+    _Refined availability share modal guidance and improved the export UI around the new range and filter controls._
+
+---
+
+## v0.13.4
 
 -   **[Unified Task Backlog Across Providers](user/features/tasks-backlog.md)** ([#275](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/275), [#290](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/290))  
     _Rebuilt backlog as a provider-agnostic system that aggregates unscheduled tasks and supports direct scheduling workflows._  
@@ -51,9 +92,6 @@ Corresponds to
 
 -   **[Event Filtering & Sorting Engine](architecture/system/event-filtering-sorting.md)** ([#288](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/288))  
     _Added centralized filtering/sorting orchestration to improve query consistency for views, embeds, and data consumers._
-
-
-### Improvements & Fixes
 
 -   **Task and Backlog Reliability Hardening** ([#313](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/313), [#314](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/pull/314))  
     _Preserved recurrence metadata during updates and improved cross-provider backlog date synchronization._

@@ -4,8 +4,6 @@
  * @license See LICENSE.md
  */
 
-import { activeDocument, activeWindow } from 'obsidian';
-
 export type LinkTextSegment =
   { kind: 'text'; text: string } | { kind: 'link'; text: string; href: string };
 
@@ -47,11 +45,7 @@ export function createLinksFragment(
   segments: LinkTextSegment[],
   options?: { betweenLinksText?: string }
 ): DocumentFragment {
-  const doc = activeDocument ?? activeWindow?.document ?? window.document;
-  if (!doc) {
-    return new DocumentFragment();
-  }
-  const fragment = doc.createDocumentFragment();
+  const fragment = createFragment();
   const betweenLinksText = options?.betweenLinksText;
   let previousSegmentWasLink = false;
 
@@ -66,9 +60,7 @@ export function createLinksFragment(
       return;
     }
 
-    const linkEl = doc.createElement('a');
-    linkEl.textContent = segment.text;
-    linkEl.href = segment.href;
+    const linkEl = createEl('a', { text: segment.text, href: segment.href });
     fragment.append(linkEl);
 
     previousSegmentWasLink = true;

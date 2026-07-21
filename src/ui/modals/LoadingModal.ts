@@ -43,7 +43,7 @@ export class LoadingModal extends Modal {
 
     const spinnerContainer = contentEl.createDiv({ cls: 'ofc-loading-spinner-container' });
 
-    spinnerContainer.createEl('span', { text: '⏳', cls: 'ofc-loading-spinner' });
+    spinnerContainer.createSpan({ text: '⏳', cls: 'ofc-loading-spinner' });
 
     new Setting(contentEl).addButton(btn =>
       btn.setButtonText(this.cancelLabel).onClick(() => {

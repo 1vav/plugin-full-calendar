@@ -1,41 +1,73 @@
 # Break Timer
 
-The **Break Timer** is a wellness feature designed to help you avoid strain and maintain healthy habits by periodically reminding you to step away from your screen.
+!!! abstract "Feature Overview"
+	Break Timer is a lightweight wellness feature that watches active use inside Obsidian and nudges you to rest at regular intervals. When the timer expires, it sends a native desktop notification and opens a fullscreen break overlay in the current Obsidian window.
 
 > Inspiration and asset credits by [zokuzoku/cat-gatekeeper](https://github.com/zokuzoku/cat-gatekeeper) under MIT license.
 
-## How it works
+## How It Works
 
-Once enabled, the Break Timer monitors your active computer usage within Obsidian. When the configured break interval is reached, it:
-1. Triggers a native system desktop notification warning you that it's time for a break.
-2. Displays a fullscreen, glassmorphic overlay over your entire Obsidian window.
+Break Timer is stateful, idle-aware, and multi-window aware. The manager tracks activity in the main window, the active window, and any future popout windows. It listens to capture-phase events so user input is still detected even when editor surfaces stop event propagation.
 
-### Fullscreen Overlay & ASCII Art
+```mermaid
+flowchart LR
+	A[User activity in Obsidian] --> B[Capture listeners refresh lastActiveTime]
+	B --> C[1 second check loop evaluates expiry]
+	C -->|Break due and user active| D[Native notification]
+	D --> E[Fullscreen break overlay]
+	E --> F[Shoo cat or countdown ends]
+	F --> G[Next break scheduled]
+	C -->|User idle past threshold| H[Postpone until activity resumes]
+```
 
-The fullscreen overlay contains:
-- An animated walking **ASCII Cat** walking back and forth across the screen.
-- A **30-second countdown** progress bar.
-- A **Skip break** button which immediately closes the overlay and resets the timer in case you are in the middle of urgent work.
+!!! info "Captured Activity"
+	The timer watches `mousedown`, `mousemove`, `keydown`, `scroll`, `touchstart`, and `click` events. That means the timer follows real interaction instead of only watching one editor pane.
 
-If you let the countdown run to 0, the break ends naturally, the overlay is dismissed, and the next break is scheduled.
+### Runtime Behavior
 
-## Smart Inactivity Detection
+| Condition | Result |
+|---|---|
+| You keep using Obsidian until the break interval expires | A system notification is sent and the fullscreen overlay opens. |
+| You step away for longer than the idle reset threshold | The next break is pushed forward and the countdown does not interrupt you immediately when you return. |
+| The break overlay countdown reaches zero | The overlay closes naturally and the next break is scheduled from that moment. |
+| You click the close button | The overlay closes immediately and the timer is reset. |
 
-The timer is designed to be intelligent:
-- If you step away from your computer (e.g. go idle) for longer than your **Idle reset threshold** (defaulting to 30 minutes), the break timer automatically resets.
-- When you return to Obsidian, the countdown starts fresh, ensuring you aren't immediately hit with a break overlay after having just been away.
-- It dynamically tracks activity across all focused pane layouts, main panels, and popout windows using advanced event capture listeners.
+!!! tip "What the overlay really is"
+	The fullscreen overlay is video-backed, not ASCII art. If the two bundled WebM assets are present, the plugin uses them for the animation. If they are missing, the overlay falls back to a gradient background.
 
-## Settings & Configuration
+!!! note "First-run asset setup"
+	When you enable Break Timer for the first time, the plugin checks for `assets_neko1.webm` and `assets_neko2.webm` inside the plugin assets folder and downloads them if needed. If the download fails, Break Timer still works, but the overlay uses the fallback visual treatment.
 
-You can customize the Break Timer behavior in **Settings > General > Break Timer**:
+## Settings & Defaults
 
-- **Enable break timer**: Toggle the feature on or off.
-- **Break interval (minutes)**: The duration of active computer use before a break is triggered (default: `60`).
-- **Idle reset threshold (minutes)**: The time of inactivity after which the break countdown resets to full duration (default: `30`).
-- **Break duration (seconds)**: How long the break overlay displays on the screen before auto-dismissing (default: `30`).
+Open **Settings → General → Break Timer** to configure the feature.
 
-## Command Palette Shortcuts
+| Setting | Default | Purpose |
+|---|---:|---|
+| **Enable break timer** | Off | Turns the feature on or off. |
+| **Break interval (minutes)** | `60` | How long of active use must pass before the next break trigger. |
+| **Idle reset threshold (minutes)** | `30` | How long you can stay inactive before the timer resets when you return. Set this to `0` to disable idle-based resetting. |
+| **Break duration (seconds)** | `30` | How long the fullscreen overlay remains visible before auto-dismissal. |
 
-You can force-trigger a break at any time using Obsidian's command palette (`Ctrl + P` or `Cmd + P`) and running:
+!!! warning "Idle behavior matters"
+	If the timer expires while you are already idle, it does not interrupt you with a break screen. Instead, the next break is postponed until you become active again.
+
+## Manual Trigger
+
+You can force the overlay at any time from Obsidian's command palette (`Ctrl + P` / `Cmd + P`) by running:
+
 - `Trigger break timer overlay`
+
+This immediately sends the notification, opens the fullscreen break screen, and starts the configured countdown.
+
+---
+
+### 📚 Related Resources
+
+=== "User Docs"
+	*   [Reminders and Notifications](reminders.md) — Standard event reminders and snooze behavior.
+	*   [FCR Reminder Companion](fcr-reminder.md) — Native offline notification companion for event alerts.
+	*   [Core Features](index.md) — Browse the rest of the user-facing feature guides.
+
+=== "Technical Deep-Dives"
+	*   [Break Timer Architecture](../../architecture/system/features/break-timer-architecture.md) — Manager lifecycle, activity capture, and overlay flow.

@@ -1140,8 +1140,9 @@ export async function renderCalendar(
       });
       if (toggleTask) {
         if (event.extendedProps.isTask) {
-          const checkbox = containerEl.ownerDocument.createElement('input');
-          checkbox.type = 'checkbox';
+          const checkbox = createEl('input', {
+            attr: { type: 'checkbox' }
+          });
           checkbox.checked = !!event.extendedProps.taskCompleted;
 
           const syncVisualState = (state: RecurringInstanceState | null) => {
@@ -1297,24 +1298,22 @@ export async function renderCalendar(
     const inputWrapEl =
       keepWrapEl ||
       (() => {
-        const wrapEl = containerEl.ownerDocument.createElement('div');
-        wrapEl.className = 'ofc-toolbar-search-input-wrap';
+        const wrapEl = createDiv({ cls: 'ofc-toolbar-search-input-wrap' });
         wrapEl.setCssProps({
           width: searchExpanded || searchQuery ? '180px' : '0px'
         });
 
-        const inputEl = containerEl.ownerDocument.createElement('input');
-        inputEl.className = 'ofc-toolbar-search-input';
-        inputEl.type = 'text';
-        inputEl.placeholder = 'Search events...';
-        inputEl.value = searchQuery;
-        inputEl.ariaLabel = 'Search events';
+        const inputEl = createEl('input', {
+          cls: 'ofc-toolbar-search-input',
+          attr: { type: 'text', placeholder: 'Search events...', 'aria-label': 'Search events' },
+          value: searchQuery
+        });
 
-        const clearEl = containerEl.ownerDocument.createElement('button');
-        clearEl.className = 'clickable-icon ofc-toolbar-search-clear';
-        clearEl.type = 'button';
-        clearEl.ariaLabel = 'Clear search';
-        clearEl.textContent = '×';
+        const clearEl = createEl('button', {
+          cls: 'clickable-icon ofc-toolbar-search-clear',
+          text: '×',
+          attr: { type: 'button', 'aria-label': 'Clear search' }
+        });
         clearEl.setCssProps({ display: searchQuery ? 'inline-flex' : 'none' });
 
         wrapEl.appendChild(inputEl);

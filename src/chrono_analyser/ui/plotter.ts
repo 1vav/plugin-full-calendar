@@ -71,7 +71,7 @@ function safeCreateEl(element: HTMLElement, tag: string, options?: CreateOptions
     return maybe.createEl(tag as keyof HTMLElementTagNameMap, options) as HTMLElement;
   }
 
-  const newEl = element.ownerDocument.createElement(tag);
+  const newEl = createEl(tag as keyof HTMLElementTagNameMap);
   if (options) {
     if (options.cls) newEl.className = options.cls;
     if (options.text) newEl.textContent = options.text;

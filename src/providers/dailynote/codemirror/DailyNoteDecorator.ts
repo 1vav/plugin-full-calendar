@@ -29,8 +29,7 @@ class InlineEventWidget extends WidgetType {
   }
 
   toDOM(view: EditorView): HTMLElement {
-    const wrapper = activeDocument.createElement('span');
-    wrapper.addClass('fc-lp-inline-event-wrapper');
+    const wrapper = createSpan({ cls: 'fc-lp-inline-event-wrapper' });
     wrapper.style.setProperty('--calendar-color', this.color);
     // wrapper.style.setProperty('margin', '0', 'important');
 
@@ -46,16 +45,18 @@ class InlineEventWidget extends WidgetType {
 
     // Time representation
     if (this.startTime) {
-      const timeEl = activeDocument.createElement('span');
-      timeEl.addClass('fc-lp-inline-event-time');
-      timeEl.setText(this.endTime ? `${this.startTime} - ${this.endTime}` : this.startTime);
+      const timeEl = createSpan({
+        cls: 'fc-lp-inline-event-time',
+        text: this.endTime ? `${this.startTime} - ${this.endTime}` : this.startTime
+      });
       wrapper.appendChild(timeEl);
     }
 
     // Event title
-    const titleEl = activeDocument.createElement('span');
-    titleEl.addClass('fc-lp-inline-event-title');
-    titleEl.setText(this.title);
+    const titleEl = createSpan({
+      cls: 'fc-lp-inline-event-title',
+      text: this.title
+    });
     if (this.completed) {
       titleEl.addClass('is-completed');
     }
@@ -68,8 +69,7 @@ class InlineEventWidget extends WidgetType {
     }
 
     // Action controls (Edit Details button revealed on hover)
-    const controls = activeDocument.createElement('span');
-    controls.addClass('fc-lp-inline-event-controls');
+    const controls = createSpan({ cls: 'fc-lp-inline-event-controls' });
 
     const editBtn = createIconButton('pencil', 'Edit event', () => this.onEdit());
     controls.appendChild(editBtn);

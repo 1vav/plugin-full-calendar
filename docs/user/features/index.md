@@ -19,7 +19,7 @@
 | Unified Backlog Panel | [Task Backlog](tasks-backlog.md) | Aggregate and schedule tasks across multiple providers |
 | Glance at weather conditions | [Weather Forecasts](weather.md) | Glance at live WMO conditions and temperatures in your daily, weekly, and monthly views |
 | CLI & Automations | [Developer API & CLI](api.md) | Access your calendar programmatically via REST API and PATs |
-| Wellness Break Reminders | [Break Timer](break-timer.md) | Periodically remind yourself to take a break with an animated walking ASCII cat overlay |
+| Wellness Break Reminders | [Break Timer](break-timer.md) | Periodically remind yourself to take a break with a fullscreen, video-backed wellness overlay and desktop notification |
 | Export Event Cache | [ICS Export](ics-export.md) | Export your calendar events and tasks as a standard .ics file for use elsewhere |
 
 ## Feature Directory

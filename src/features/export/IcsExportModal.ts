@@ -292,7 +292,7 @@ export class IcsExportModal extends Modal {
       this.startDateVal = (e.target as HTMLInputElement).value;
     });
 
-    dateSetting.controlEl.createEl('span', { cls: 'ofc-range-separator', text: ' To ' });
+    dateSetting.controlEl.createSpan({ cls: 'ofc-range-separator', text: ' To ' });
 
     const endDateInput = dateSetting.controlEl.createEl('input', { attr: { type: 'date' } });
     endDateInput.value = this.endDateVal;
@@ -318,7 +318,7 @@ export class IcsExportModal extends Modal {
       this.startTimeVal = (e.target as HTMLInputElement).value;
     });
 
-    timeSetting.controlEl.createEl('span', { cls: 'ofc-range-separator', text: ' To ' });
+    timeSetting.controlEl.createSpan({ cls: 'ofc-range-separator', text: ' To ' });
 
     const endTimeInput = timeSetting.controlEl.createEl('input', { attr: { type: 'time' } });
     endTimeInput.value = this.endTimeVal;
@@ -614,7 +614,7 @@ export class IcsExportModal extends Modal {
 
       const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
       const url = URL.createObjectURL(blob);
-      const a = activeDocument.createElement('a');
+      const a = createEl('a');
       a.href = url;
       a.download = filename;
       activeDocument.body.appendChild(a);

@@ -202,9 +202,7 @@ class AutocompleteComponent {
 
     if (suggestions.length > 0) {
       suggestions.forEach((item, _idx) => {
-        const div = this.suggestionsEl.ownerDocument.createElement('div');
-        div.textContent = item;
-        div.classList.add('autocomplete-suggestion-item');
+        const div = createDiv({ cls: 'autocomplete-suggestion-item', text: item });
 
         div.addEventListener('mousedown', e => {
           e.preventDefault(); // Prevent blur event from firing first

@@ -28,38 +28,36 @@ class FrontmatterCardWidget extends WidgetType {
   }
 
   toDOM(view: EditorView): HTMLElement {
-    const card = activeDocument.createElement('div');
-    card.addClass('fc-lp-header-card');
+    const card = createDiv({ cls: 'fc-lp-header-card' });
     card.style.setProperty('--calendar-color', this.color);
     // card.style.setProperty('display', 'block', 'important');
 
     // Color banner & Calendar badge
-    const banner = activeDocument.createElement('div');
-    banner.addClass('fc-lp-header-card-banner');
+    const banner = createDiv({ cls: 'fc-lp-header-card-banner' });
 
     const dot = createColorDot(this.color);
     banner.appendChild(dot);
 
-    const calLabel = activeDocument.createElement('span');
-    calLabel.addClass('fc-lp-header-card-cal-label');
-    calLabel.setText(this.calendarName);
+    const calLabel = createSpan({
+      cls: 'fc-lp-header-card-cal-label',
+      text: this.calendarName
+    });
     banner.appendChild(calLabel);
 
     card.appendChild(banner);
 
     // Large styled event title
-    const titleEl = activeDocument.createElement('h1');
-    titleEl.addClass('fc-lp-header-card-title');
-    titleEl.setText(this.title);
+    const titleEl = createEl('h1', {
+      cls: 'fc-lp-header-card-title',
+      text: this.title
+    });
     card.appendChild(titleEl);
 
     // Details layout block
-    const details = activeDocument.createElement('div');
-    details.addClass('fc-lp-header-card-details');
+    const details = createDiv({ cls: 'fc-lp-header-card-details' });
 
     // Date and time info
-    const datetime = activeDocument.createElement('div');
-    datetime.addClass('fc-lp-header-card-datetime');
+    const datetime = createDiv({ cls: 'fc-lp-header-card-datetime' });
 
     let timeText = this.date;
     if (this.startTime) {
@@ -74,8 +72,7 @@ class FrontmatterCardWidget extends WidgetType {
     details.appendChild(datetime);
 
     // Category / Subcategory pills
-    const badges = activeDocument.createElement('div');
-    badges.addClass('fc-lp-header-card-badges');
+    const badges = createDiv({ cls: 'fc-lp-header-card-badges' });
     if (this.category) {
       badges.appendChild(createCategoryPill(this.category, this.color));
     }
@@ -86,8 +83,7 @@ class FrontmatterCardWidget extends WidgetType {
     card.appendChild(details);
 
     // Quick Actions
-    const controls = activeDocument.createElement('div');
-    controls.addClass('fc-lp-header-card-controls');
+    const controls = createDiv({ cls: 'fc-lp-header-card-controls' });
 
     const editBtn = createIconButton('pencil', 'Edit details', () => this.onEdit());
     controls.appendChild(editBtn);

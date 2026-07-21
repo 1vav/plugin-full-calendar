@@ -28,7 +28,7 @@ export function createDOMStructure(rootEl: HTMLElement): void {
   });
   const demoText = demoBanner.createDiv({ cls: 'demo-mode-banner-text' });
   demoText.createEl('strong', { text: t('chrono.analyser.demo.title') });
-  demoText.createEl('span', { text: t('chrono.analyser.demo.description') });
+  demoText.createSpan({ text: t('chrono.analyser.demo.description') });
   demoBanner.createEl('button', {
     cls: 'mod-cta',
     attr: { id: 'turnOffDemoBtn' },

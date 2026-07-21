@@ -193,8 +193,7 @@ export class UIService {
       const loadingContainer: HTMLElement = container.createDiv
         ? container.createDiv({ cls: 'loading-container' })
         : (() => {
-            const div = container.ownerDocument.createElement('div');
-            div.className = 'loading-container';
+            const div = createDiv({ cls: 'loading-container' });
             resultContainer.appendChild(div);
             return div;
           })();
@@ -207,11 +206,9 @@ export class UIService {
         maybeCreateDiv.call(loadingContainer, { cls: 'loading-spinner' });
         maybeCreateDiv.call(loadingContainer, { text: 'Analyzing your data...' });
       } else {
-        const spinner = container.ownerDocument.createElement('div');
-        spinner.className = 'loading-spinner';
+        const spinner = createDiv({ cls: 'loading-spinner' });
         loadingContainer.appendChild(spinner);
-        const text = container.ownerDocument.createElement('div');
-        text.textContent = 'Analyzing your data...';
+        const text = createDiv({ text: 'Analyzing your data...' });
         loadingContainer.appendChild(text);
       }
     } else {

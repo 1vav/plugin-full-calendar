@@ -45,6 +45,12 @@ Typical progression in standard time-grid views:
 - 15 minutes
 - 5 minutes
 
+## Mobile Navigation
+
+- On mobile, the month view uses compact event markers to reduce clutter while still keeping per-day occupancy visible.
+- Supported day and 3-day views accept pinch-to-zoom gestures for faster density changes.
+- Layout switching is grouped into the mobile `More` menu so the main toolbar stays readable on narrow screens.
+
 ## Context Menu Actions
 
 Editable events include:

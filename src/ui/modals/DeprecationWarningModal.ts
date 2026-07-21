@@ -34,7 +34,7 @@ export class DeprecationWarningModal extends Modal {
     for (const source of this.deprecatedSources) {
       const li = listEl.createEl('li');
       li.createEl('strong', { text: `${source.name} ` });
-      li.createEl('span', { text: `(${source.typeName} provider) — ${source.message}` });
+      li.createSpan({ text: `(${source.typeName} provider) — ${source.message}` });
     }
 
     contentEl.createEl('p', {

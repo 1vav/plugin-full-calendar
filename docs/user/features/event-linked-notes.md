@@ -90,6 +90,8 @@ If you require different layouts/templates for different types of events, enable
 * **Decoupling from Default**: Enabling this setting hides the default "Linked note template" editor row. Instead, you configure one or more note files inside your vault to serve as your templates list.
 * **Selection Modal**: When creating or linking a remote event note, Obsidian will display a modal prompting you to select which template preset to load the note with.
 * **Configuration**: Select any existing markdown note in your vault via the dropdown to add it to your active presets list.
+* **At Least One Preset Required**: Once preset mode is on, the preset list must contain at least one configured note before new linked notes can be created.
+* **Frontmatter Preservation**: Preset files may define their own YAML frontmatter, and the plugin merges managed identity fields into that content instead of replacing it.
 
 ---
 

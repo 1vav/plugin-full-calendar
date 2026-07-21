@@ -107,7 +107,7 @@ export class MarkdownRenderChild extends Component {}
 export class Modal {
     contentEl: HTMLElement;
     constructor(public app: unknown) {
-        this.contentEl = document.createElement("div");
+        this.contentEl = createDiv();
     }
     open() {}
     close() {}
@@ -119,7 +119,7 @@ export class App {}
 export class PluginSettingTab {
     containerEl: HTMLElement;
     constructor(public app: unknown, public plugin: unknown) {
-        this.containerEl = document.createElement("div");
+        this.containerEl = createDiv();
     }
 }
 

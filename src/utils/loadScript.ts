@@ -88,7 +88,7 @@ export async function loadCachedScript(app: App, filename: string, cdnUrl: strin
     }
 
     try {
-      const script = doc.createElement('script') as LoadedScriptElement;
+      const script = createEl('script') as LoadedScriptElement;
       script.id = scriptId;
       script.textContent = scriptCode;
       script.loaded = true;

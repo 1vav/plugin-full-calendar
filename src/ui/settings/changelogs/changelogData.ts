@@ -14,6 +14,53 @@ export interface Version {
 // Add new versions to the TOP of this array.
 export const changelogData: Version[] = [
   {
+    version: '0.13.5',
+    changes: [
+      {
+        type: 'new',
+        title: 'Availability Sharing',
+        description:
+          '[Publish free/busy schedules](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/availability/) as local Markdown or a secret client-side GitHub Gist viewer.'
+      },
+      {
+        type: 'new',
+        title: 'ICS Export Filters',
+        description:
+          '[Export](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/ics-export/) a specific date range, filter by daily time window, exclude weekends or all-day items, and narrow by category.'
+      },
+      {
+        type: 'new',
+        title: 'Linked Note template Presets',
+        description:
+          '[Customise BreakTimer](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/break-timer/) to remind you to take breaks, with cute cat animation inspired by [zokuzoku/cat-gatekeeper](https://github.com/zokuzoku/cat-gatekeeper)'
+      },
+      {
+        type: 'new',
+        title: 'BreakTimer Animation',
+        description:
+          '[Choose between templates](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/features/event-linked-notes/#4-template-presets-power-users) for linked notes.'
+      },
+      {
+        type: 'improvement',
+        title: 'Mobile UX Refresh',
+        description:
+          'Month view is more compact, supported time-grid views pinch-to-zoom, and mobile layout switching moved into the More menu.'
+      },
+      {
+        type: 'fix',
+        title: 'Google Scope Preservation',
+        description:
+          'Google Calendar and Google Tasks now preserve merged OAuth scopes when accounts are reauthorized.'
+      },
+      {
+        type: 'fix',
+        title: 'Linked Note bug fixes',
+        description:
+          'Template presets now preserve custom frontmatter and linked notes reuse open tabs when opened from the calendar.'
+      }
+    ]
+  },
+  {
     version: '0.13.4',
     changes: [
       {
@@ -209,41 +256,6 @@ export const changelogData: Version[] = [
         title: 'CalDAV & Event fixes',
         description:
           'Hardened mobile CalDAV authentication, improved import UX diagnostics, and resolved DailyNote UID collisions on move. Converting all-day to timed events now defaults to 1-hour duration.'
-      }
-    ]
-  },
-  {
-    version: '0.12.9',
-    changes: [
-      {
-        type: 'new',
-        title: 'ActivityWatch sync',
-        description:
-          'Added a dedicated ActivityWatch sync engine with continuity-aware ingestion, auto-sync scheduling, and title templating.'
-      },
-      {
-        type: 'improvement',
-        title: 'Tasks integrations',
-        description:
-          'Checkout [Tasks Integration docs](https://obsidian-full-calendar-remastered.github.io/plugin-full-calendar/user/calendars/tasks-plugin-integration/). Expanded Tasks backlog and display settings, plus payload handling and workflow improvements. ([#142](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/142), [#166](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/166), [#175](https://github.com/obsidian-full-calendar-remastered/plugin-full-calendar/issues/175))'
-      },
-      {
-        type: 'improvement',
-        title: 'Core sync identity',
-        description:
-          'Switched sync handling to keyed identity diffs with reverse lookup maps and safer continuity replacement to reduce churn and duplicate blocks.'
-      },
-      {
-        type: 'improvement',
-        title: 'Settings and calendar UX',
-        description:
-          'Updated settings navigation, calendar interactions, search behavior, and mobile responsiveness.'
-      },
-      {
-        type: 'fix',
-        title: 'Build, docs, and i18n',
-        description:
-          'Reduced startup and bundle overhead, refreshed locale loading, and added ActivityWatch architecture documentation.'
       }
     ]
   }
