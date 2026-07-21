@@ -145,6 +145,10 @@ export interface GoogleAccount {
   refreshToken: string | null;
   accessToken: string | null;
   expiryDate: number | null;
+  /** Space-separated OAuth scopes granted to this account. Used to compute the union scope
+   *  when re-authorizing so that adding one provider (e.g. tasks) never revokes another
+   *  provider's access (e.g. calendar) on the same Google account. */
+  grantedScopes?: string;
 }
 
 export interface MicrosoftAccount {
@@ -226,6 +230,8 @@ export interface FullCalendarSettings {
   currentVersion: string | null;
   linkedNotesDirectory: string;
   linkedNoteTemplate: string;
+  enableLinkedNoteTemplatesPreset: boolean;
+  linkedNoteTemplatesPresets: string[];
   linkedNoteLinkStrategy: LinkedNoteLinkStrategy;
   taskBacklogLastProviderId: string;
   caldavTaskInboxLastCalendarId: string;
@@ -239,7 +245,6 @@ export interface FullCalendarSettings {
   githubToken: string | null;
   availabilityGistId: string | null;
   availabilityExportPath: string;
-  icsExportPath: string;
   breakTimer: BreakTimerSettings;
   availabilityDefaultTimeRange: { startTime: string; endTime: string };
   openDailyNoteOnDateClick: boolean;
@@ -256,7 +261,6 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
   githubToken: null,
   availabilityGistId: null,
   availabilityExportPath: '',
-  icsExportPath: '',
   availabilityDefaultTimeRange: { startTime: '09:00', endTime: '17:00' },
   useLegacyPlaintextCredentials: false,
   calendarSources: [],
@@ -356,6 +360,8 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
   weatherUnit: 'C',
   linkedNoteTemplate:
     '# {{title}}\n\n**Date**: {{date}}\n**Time**: {{timeString}}\n**Location**: {{location}}\n**Calendar**: {{calendarName}}\n\n## Description\n{{description}}\n\n## Notes\n- ',
+  enableLinkedNoteTemplatesPreset: false,
+  linkedNoteTemplatesPresets: [],
   openDailyNoteOnDateClick: false,
   breakTimer: {
     enabled: false,
