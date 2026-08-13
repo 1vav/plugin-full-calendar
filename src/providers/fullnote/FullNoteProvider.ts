@@ -5,7 +5,12 @@ import { DateTime } from 'luxon';
 
 import { OFCEvent, EventLocation, validateEvent } from '../../types';
 import FullCalendarPlugin from '../../main';
-import { newFrontmatter, modifyFrontmatterString, replaceFrontmatter } from './frontmatter';
+import {
+  newFrontmatter,
+  modifyFrontmatterString,
+  replaceFrontmatter,
+  parseFrontmatterWithFallback
+} from './frontmatter';
 import { CalendarProvider, CalendarProviderCapabilities, SyncKeyProvider } from '../Provider';
 import { EventHandle, FCReactComponent, ProviderConfigContext } from '../typesProvider';
 import { FullNoteProviderConfig } from './typesLocal';
@@ -21,6 +26,8 @@ import {
 import { FrontmatterCardDecorator } from './codemirror/FrontmatterCardDecorator';
 import { LivePreviewDecorator } from '../../features/livepreview/LivePreviewDecorator';
 import { TemplateEngine } from '../../features/linked-notes/TemplateEngine';
+import { yieldToMainThread } from '../../utils/async';
+import { LoadDebugProfiler } from '../../utils/LoadDebugProfiler';
 
 export type EditableEventResponse = [OFCEvent, EventLocation | null];
 
@@ -197,11 +204,23 @@ export class FullNoteProvider implements CalendarProvider<FullNoteProviderConfig
 
   public async getEventsInFile(file: TFile): Promise<EditableEventResponse[]> {
     const metadata = await waitForMetadataWithTimeout(this.app, file);
-    if (!metadata?.frontmatter) {
-      return [];
+    let frontmatter: Record<string, unknown> | null =
+      (metadata?.frontmatter as Record<string, unknown>) || null;
+
+    if (!frontmatter || !frontmatter.title) {
+      const page = await this.app.read(file);
+      const fallbackFm = parseFrontmatterWithFallback(page);
+      if (fallbackFm) {
+        frontmatter = {
+          ...(frontmatter || {}),
+          ...fallbackFm
+        };
+      }
     }
 
-    const frontmatter = metadata.frontmatter as Record<string, unknown>;
+    if (!frontmatter) {
+      return [];
+    }
     const frontmatterType = frontmatter.type;
     const eventType =
       frontmatterType === 'recurring' || frontmatterType === 'rrule' ? frontmatterType : 'single';
@@ -225,19 +244,36 @@ export class FullNoteProvider implements CalendarProvider<FullNoteProviderConfig
   }
 
   async getEvents(_range?: { start: Date; end: Date }): Promise<EditableEventResponse[]> {
-    const eventFolder = this.app.getAbstractFileByPath(this.source.directory);
-    if (!eventFolder || !(eventFolder instanceof TFolder)) {
-      throw new Error(`${this.source.directory} is not a valid directory.`);
-    }
-
-    const events: EditableEventResponse[] = [];
-    for (const file of eventFolder.children) {
-      if (file instanceof TFile) {
-        const results = await this.getEventsInFile(file);
-        events.push(...results);
+    return LoadDebugProfiler.withContext('Full Note Sync', async () => {
+      const eventFolder = this.app.getAbstractFileByPath(this.source.directory);
+      if (!eventFolder || !(eventFolder instanceof TFolder)) {
+        throw new Error(`${this.source.directory} is not a valid directory.`);
       }
-    }
-    return events;
+
+      const events: EditableEventResponse[] = [];
+      const files = eventFolder.children.filter((file): file is TFile => file instanceof TFile);
+      const BATCH_SIZE = 15;
+
+      for (let i = 0; i < files.length; i += BATCH_SIZE) {
+        const batchName = `Full Notes Batch (${i + 1}-${Math.min(i + BATCH_SIZE, files.length)}/${files.length})`;
+        await LoadDebugProfiler.withContext(batchName, async () => {
+          const startTime = performance.now();
+          const batch = files.slice(i, i + BATCH_SIZE);
+          const batchResults = await Promise.all(batch.map(file => this.getEventsInFile(file)));
+          for (const res of batchResults) {
+            events.push(...res);
+          }
+          const duration = performance.now() - startTime;
+          if (duration >= 50) {
+            LoadDebugProfiler.recordFreeze(batchName, duration);
+          }
+        });
+        if (i + BATCH_SIZE < files.length) {
+          await yieldToMainThread();
+        }
+      }
+      return events;
+    });
   }
 
   async createEvent(event: OFCEvent): Promise<[OFCEvent, EventLocation]> {

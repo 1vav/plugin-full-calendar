@@ -10,6 +10,7 @@ import FullCalendarPlugin from '../../../main';
 import { t } from '../../../features/i18n/i18n';
 import { createDescWithDocs } from '../docsLinks';
 import { renderWeatherSettings } from '../../../features/weather/WeatherSettings';
+import { showLoadDebugLogModal } from '../../modals/showLoadDebugLogModal';
 
 const INITIAL_VIEW_OPTIONS = {
   DESKTOP: {
@@ -125,6 +126,18 @@ export function renderGeneralSettings(
       toggle.onChange(async val => {
         PluginState.getSettings().openDailyNoteOnDateClick = val;
         await PluginState.saveSettings();
+      });
+    });
+
+  new Setting(containerEl)
+    .setName(t('settings.general.loadDebugTiming.label'))
+    .setDesc(t('settings.general.loadDebugTiming.description'))
+    .addButton(button => {
+      button.setButtonText(
+        t('settings.general.loadDebugTiming.viewLog') || 'Run & view load debug benchmark'
+      );
+      button.onClick(() => {
+        void showLoadDebugLogModal(_plugin.app);
       });
     });
 

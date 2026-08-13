@@ -6,6 +6,7 @@
 
 import { PluginState } from '../../../core/PluginState';
 import { Setting } from 'obsidian';
+import { showNotice } from '../../../utils/showNotice';
 import FullCalendarPlugin from '../../../main';
 import { t } from '../../../features/i18n/i18n';
 import { createDescWithDocs, createDocsLinksFragment } from '../docsLinks';
@@ -65,6 +66,18 @@ export function renderAppearanceSettings(
       toggle.onChange(async val => {
         PluginState.getSettings().timeFormat24h = val;
         await PluginState.saveSettings();
+      });
+    });
+
+  new Setting(containerEl)
+    .setName(t('settings.appearance.enableLivePreview.label'))
+    .setDesc(t('settings.appearance.enableLivePreview.description'))
+    .addToggle(toggle => {
+      toggle.setValue(PluginState.getSettings().enableLivePreview ?? true);
+      toggle.onChange(async val => {
+        PluginState.getSettings().enableLivePreview = val;
+        await PluginState.saveSettings();
+        _plugin.app.workspace.updateOptions();
       });
     });
 
@@ -181,11 +194,24 @@ export function renderAppearanceSettings(
     .addText(text => {
       text.setValue(PluginState.getSettings().slotMinTime || '00:00');
       text.onChange(async value => {
-        // Basic validation for time format
-        if (/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
-          PluginState.getSettings().slotMinTime = value;
-          await PluginState.saveSettings();
+        // Basic syntax validation for time format
+        if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+          return;
         }
+        // Cross-field invariant: earliest must be strictly before latest
+        const currentMax = PluginState.getSettings().slotMaxTime || '24:00';
+        if (value >= currentMax) {
+          console.warn(
+            `[FCR] slotMinTime (${value}) must be earlier than slotMaxTime (${currentMax}). Value not saved.`
+          );
+          showNotice(
+            `Earliest time (${value}) must be before Latest time (${currentMax}). Value not saved.`,
+            5000
+          );
+          return;
+        }
+        PluginState.getSettings().slotMinTime = value;
+        await PluginState.saveSettings();
       });
     });
 
@@ -195,11 +221,24 @@ export function renderAppearanceSettings(
     .addText(text => {
       text.setValue(PluginState.getSettings().slotMaxTime || '24:00');
       text.onChange(async value => {
-        // Basic validation for time format (allow 24:00)
-        if (/^([01]?[0-9]|2[0-4]):[0-5][0-9]$/.test(value)) {
-          PluginState.getSettings().slotMaxTime = value;
-          await PluginState.saveSettings();
+        // Basic syntax validation for time format (allow 24:00)
+        if (!/^([01]?[0-9]|2[0-4]):[0-5][0-9]$/.test(value)) {
+          return;
         }
+        // Cross-field invariant: latest must be strictly after earliest
+        const currentMin = PluginState.getSettings().slotMinTime || '00:00';
+        if (value <= currentMin) {
+          console.warn(
+            `[FCR] slotMaxTime (${value}) must be later than slotMinTime (${currentMin}). Value not saved.`
+          );
+          showNotice(
+            `Latest time (${value}) must be after Earliest time (${currentMin}). Value not saved.`,
+            5000
+          );
+          return;
+        }
+        PluginState.getSettings().slotMaxTime = value;
+        await PluginState.saveSettings();
       });
     });
 
@@ -211,7 +250,6 @@ export function renderAppearanceSettings(
       toggle.onChange(async val => {
         PluginState.getSettings().allDaySlot = val;
         await PluginState.saveSettings();
-        rerender();
       });
     });
 
@@ -248,7 +286,6 @@ export function renderAppearanceSettings(
       dropdown.onChange(async value => {
         PluginState.getSettings().timeGridDayHeaderFormat = value;
         await PluginState.saveSettings();
-        rerender();
       });
     });
 
@@ -394,7 +431,6 @@ export function renderAppearanceSettings(
       toggle.onChange(async val => {
         PluginState.getSettings().highlightCurrentOrNextEvent = val;
         await PluginState.saveSettings();
-        rerender();
       });
     });
 }

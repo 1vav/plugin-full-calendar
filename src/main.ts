@@ -29,6 +29,7 @@ import type { Workspace } from 'obsidian';
 import { initializeI18n, t } from './features/i18n/i18n';
 import './styles.css';
 import { livePreviewCoordinator } from './features/livepreview/LivePreviewCoordinator';
+import { LoadDebugProfiler } from './utils/LoadDebugProfiler';
 
 import { AppWithSettings } from './types/obsidian-ext';
 import { FullCalendarSettings, DEFAULT_SETTINGS } from './types/settings';
@@ -95,6 +96,7 @@ export default class FullCalendarPlugin extends Plugin {
    * listeners for Vault file changes (create, rename, delete).
    */
   async onload() {
+    LoadDebugProfiler.markPluginOnloadStart();
     // Initialize i18n system first, before any UI is rendered
     await initializeI18n(this.app, this.manifest.id);
 
@@ -355,6 +357,14 @@ export default class FullCalendarPlugin extends Plugin {
       }
     });
     this.addCommand({
+      id: 'full-calendar-show-load-debug-log',
+      name: t('commands.showLoadDebugLog') || 'Show load debug timing log',
+      callback: async () => {
+        const { showLoadDebugLogModal } = await import('./ui/modals/showLoadDebugLogModal');
+        void showLoadDebugLogModal(this.app);
+      }
+    });
+    this.addCommand({
       id: 'full-calendar-sync-activitywatch',
       name: t('commands.syncActivityWatch'),
       checkCallback: checking => {
@@ -457,8 +467,11 @@ export default class FullCalendarPlugin extends Plugin {
     // Register embedded calendar markdown code block processor
     registerCodeBlockProcessor(this);
 
+    LoadDebugProfiler.markPluginOnloadEnd();
+
     // Delayed background cache population for lazy start optimization
     this.app.workspace.onLayoutReady(() => {
+      LoadDebugProfiler.markLayoutReady();
       // void startupCleanupTempNote(this.app);
       // void runMonthlyReportScheduler(this.app, this);
       void triggerDevMilestoneIfActive();

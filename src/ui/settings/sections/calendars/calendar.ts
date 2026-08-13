@@ -41,7 +41,7 @@ import { WeatherDetailModal } from '../../../../features/weather/WeatherDetailMo
 import { openDailyNoteForDate } from '../../../../features/daily-notes/openDailyNote';
 import { i18n } from '../../../../features/i18n/i18n';
 
-interface ExtraRenderProps {
+export interface ExtraRenderProps {
   eventClick?: (info: EventClickArg) => void;
   customButtons?: {
     [key: string]: {
@@ -83,6 +83,13 @@ interface ExtraRenderProps {
   onSearchQueryChange?: (query: string) => void;
   initialSearchQuery?: string;
   onEventsSet?: () => void;
+  /**
+   * Called by the `eventsSet` FullCalendar hook whenever the rendered event
+   * count reaches zero on a time-grid view.  Receives the live Calendar
+   * instance so the caller can inspect `cal.getEvents()` and `cal.view.type`.
+   * Used by the blank-view diagnostic to emit console warnings and Notices.
+   */
+  onBlankView?: (cal: Calendar) => void;
   headerToolbar?: false | object;
   footerToolbar?: false | object;
   height?: 'auto' | number | 'parent';
@@ -181,7 +188,8 @@ export async function renderCalendar(
     drop,
     onSearchQueryChange,
     initialSearchQuery,
-    onEventsSet
+    onEventsSet,
+    onBlankView
   } = settings || {};
 
   // Wrap eventClick to ignore shadow events
@@ -198,6 +206,7 @@ export async function renderCalendar(
   const parentEl = containerEl.parentElement;
   let agendaEl: HTMLElement | null = null;
   let cal: Calendar | null = null;
+  let blankViewTimer: number | null = null;
 
   const getOrCreateAgendaEl = (): HTMLElement | null => {
     if (!isNarrow) return null;
@@ -1206,6 +1215,30 @@ export async function renderCalendar(
     eventsSet: () => {
       updateCurrentOrNextEventHighlight();
       onEventsSet?.();
+
+      if (blankViewTimer !== null) {
+        window.clearTimeout(blankViewTimer);
+        blankViewTimer = null;
+      }
+
+      // Fire blank-view diagnostic if the caller registered a handler and the
+      // rendered event list (excluding shadow events) remains empty after settling.
+      if (onBlankView && cal) {
+        const nonShadowCount = cal.getEvents().filter(e => !e.extendedProps?.isShadow).length;
+        if (nonShadowCount === 0) {
+          blankViewTimer = window.setTimeout(() => {
+            blankViewTimer = null;
+            if (cal && cal.el) {
+              const currentNonShadowCount = cal
+                .getEvents()
+                .filter(e => !e.extendedProps?.isShadow).length;
+              if (currentNonShadowCount === 0) {
+                onBlankView(cal);
+              }
+            }
+          }, 300);
+        }
+      }
     },
 
     // Enable drag-and-drop from external sources (e.g., Tasks Backlog)
@@ -1491,6 +1524,10 @@ export async function renderCalendar(
 
   const originalDestroy = cal.destroy.bind(cal);
   cal.destroy = () => {
+    if (blankViewTimer !== null) {
+      window.clearTimeout(blankViewTimer);
+      blankViewTimer = null;
+    }
     resizeObserver.disconnect();
     containerEl.removeEventListener('pointerdown', onPointerDownFocus);
     containerEl.removeEventListener('keydown', onKeyDownNavigate);
@@ -1525,6 +1562,10 @@ export async function renderCalendar(
       }
     });
   }
+
+  (
+    cal as unknown as { updateCurrentOrNextEventHighlight?: () => void }
+  ).updateCurrentOrNextEventHighlight = updateCurrentOrNextEventHighlight;
 
   return cal;
 }

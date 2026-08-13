@@ -161,7 +161,8 @@
     "nlpQuickAdd": "Comando FCR",
     "syncFcrReminder": "Sincronizar FCR Reminder Companion",
     "shareAvailability": "Share Availability",
-    "exportIcs": "Export Event Cache as ICS file"
+    "exportIcs": "Export Event Cache as ICS file",
+    "showLoadDebugLog": "Show load debug timing log"
   },
   "notices": {
     "settingsUpdated": "Full Calendar ha actualizado la configuración de tu calendario a un nuevo formato.",
@@ -312,6 +313,11 @@
         "addDesc": "Select a template file from your vault to add to the presets list.",
         "addPlaceholder": "Choose a template note to add...",
         "removeButton": "Remove"
+      },
+      "loadDebugTiming": {
+        "label": "Enable load debug timing",
+        "description": "Measure and log detailed execution timing breakdown for initial plugin startup, stage loading, and each calendar provider.",
+        "viewLog": "View Load Debug Log"
       }
     },
     "reminders": {
@@ -327,6 +333,10 @@
     },
     "appearance": {
       "title": "Apariencia",
+      "enableLivePreview": {
+        "label": "Activar decoración de eventos en Live Preview",
+        "description": "Muestra eventos y encabezados con estilo directamente en sus Notas Diarias y editores de notas de eventos."
+      },
       "firstDay": {
         "label": "Día de inicio de la semana",
         "description": "Elige qué día de la semana comienza."
@@ -1422,7 +1432,8 @@
         },
         "slotMaxTime": {
           "label": "Hora más tardía a mostrar",
-          "description": "Anular la hora más tardía visible en las vistas de cuadrícula de tiempo (formato: HH:mm)"
+          "description": "Anular la hora más tardía visible en las vistas de cuadrícula de tiempo (formato: HH:mm)",
+          "placeholder": "Usar valor global predeterminado"
         },
         "weekendDisplay": {
           "label": "Mostrar fines de semana",

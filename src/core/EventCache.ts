@@ -36,6 +36,7 @@ import { CacheSyncHandler, CacheContext } from './cache/CacheSyncHandler';
 import { CacheMutationHandler, MutationContext } from './cache/CacheMutationHandler';
 import { CacheEntry, UpdateViewCallback, OFCEventSource, CachedEvent } from './cache/types';
 import type { MilestoneRecordOptions } from '../features/milestones/milestones';
+import { LoadDebugProfiler } from '../utils/LoadDebugProfiler';
 
 // Re-export types for backward compatibility with external modules
 export type { CacheEntry, UpdateViewCallback, OFCEventSource, CachedEvent };
@@ -155,26 +156,42 @@ export default class EventCache {
     });
   }
 
+  private populatePromise: Promise<void> | null = null;
+
   /**
    * Populate the cache with events from all sources.
    */
   async populate(): Promise<void> {
-    await PluginState.getProviderRegistry().fetchAllByPriority(
-      (calendarId, eventsForSync) => {
-        this.syncCalendar(calendarId, eventsForSync);
-      },
-      () => {
-        // This callback runs when STAGE 1 is complete.
-        // We can trigger an initial sync/render here.
-        void (async () => {
-          this.initialized = true;
-          PluginState.getProviderRegistry().buildMap(this._store);
-          this.resync();
-          await this.timeEngine.start();
-        })();
+    if (this.populatePromise) {
+      return this.populatePromise;
+    }
+    this.populatePromise = (async () => {
+      LoadDebugProfiler.startPopulate();
+      try {
+        await PluginState.getProviderRegistry().fetchAllByPriority(
+          async (calendarId, eventsForSync) => {
+            await this.syncCalendar(calendarId, eventsForSync);
+          },
+          async () => {
+            // This callback runs when STAGE 1 is complete.
+            // Trigger initial sync/render and map building.
+            LoadDebugProfiler.startPhase('TimeEngine Setup & Map Building');
+            try {
+              this.initialized = true;
+              PluginState.getProviderRegistry().buildMap(this._store);
+              this.resync();
+              await this.timeEngine.start();
+            } finally {
+              LoadDebugProfiler.endPhase('TimeEngine Setup & Map Building');
+            }
+          }
+        );
+      } finally {
+        LoadDebugProfiler.endPopulate();
+        this.populatePromise = null;
       }
-    );
-    // No need to add localEvents manually anymore; fetchAllByPriority handles it via the callback/processResults.
+    })();
+    return this.populatePromise;
   }
 
   // ====================================================================
@@ -398,8 +415,11 @@ export default class EventCache {
   //                         FILESYSTEM & REMOTE HOOKS
   // ====================================================================
 
-  public syncCalendar(calendarId: string, newRawEvents: [OFCEvent, EventLocation | null][]): void {
-    this.syncHandler.syncCalendar(calendarId, newRawEvents);
+  public async syncCalendar(
+    calendarId: string,
+    newRawEvents: [OFCEvent, EventLocation | null][]
+  ): Promise<void> {
+    await this.syncHandler.syncCalendar(calendarId, newRawEvents);
   }
 
   /**

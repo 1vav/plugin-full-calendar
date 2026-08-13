@@ -161,7 +161,8 @@
     "nlpQuickAdd": "FCR 命令",
     "syncFcrReminder": "同步 FCR Reminder Companion",
     "shareAvailability": "Share Availability",
-    "exportIcs": "Export Event Cache as ICS file"
+    "exportIcs": "Export Event Cache as ICS file",
+    "showLoadDebugLog": "Show load debug timing log"
   },
   "notices": {
     "settingsUpdated": "日历已将您的日历设置更新为新格式。",
@@ -312,6 +313,11 @@
         "addDesc": "Select a template file from your vault to add to the presets list.",
         "addPlaceholder": "Choose a template note to add...",
         "removeButton": "Remove"
+      },
+      "loadDebugTiming": {
+        "label": "Enable load debug timing",
+        "description": "Measure and log detailed execution timing breakdown for initial plugin startup, stage loading, and each calendar provider.",
+        "viewLog": "View Load Debug Log"
       }
     },
     "reminders": {
@@ -327,6 +333,10 @@
     },
     "appearance": {
       "title": "外观",
+      "enableLivePreview": {
+        "label": "启用实时预览事件装饰",
+        "description": "直接在您的日记和事件笔记编辑器中显示样式化的事件和标题。"
+      },
       "firstDay": {
         "label": "每周起始日",
         "description": "选择每周从哪一天开始。"
@@ -1422,7 +1432,8 @@
         },
         "slotMaxTime": {
           "label": "最晚显示时间",
-          "description": "覆盖时间网格视图中的最晚可见时间（格式：HH:mm）"
+          "description": "覆盖时间网格视图中的最晚可见时间（格式：HH:mm）",
+          "placeholder": "使用全局默认值"
         },
         "weekendDisplay": {
           "label": "周末显示",

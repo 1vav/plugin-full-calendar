@@ -20,6 +20,8 @@ import { OFCEvent, validateEvent } from '../../types';
 import { injectMeetingUrl } from '../../utils/meetingUrl';
 
 import { parseTimezoneAwareString } from '../../features/timezone/Timezone';
+import { yieldToMainThread, yieldIfFrameBudgetExceeded } from '../../utils/async';
+import { LoadDebugProfiler } from '../../utils/LoadDebugProfiler';
 
 /**
  * Extracts the time part (HH:mm) from a Luxon DateTime object.
@@ -715,4 +717,105 @@ export function getEventsFromICS(text: string): OFCEvent[] {
   const allEventsAndTodos = allEvents.concat(allTodos);
 
   return allEventsAndTodos.map(validateEvent).flatMap(e => (e ? [e] : []));
+}
+
+/**
+ * Non-blocking, async variant of getEventsFromICS.
+ * Yields to main thread during parsing if the ICS payload contains a large number of components,
+ * and records any freeze duration in the LoadDebugProfiler.
+ */
+export async function getEventsFromICSAsync(text: string): Promise<OFCEvent[]> {
+  return LoadDebugProfiler.withContext('ICS Payload Parsing & Recurrence Expansion', async () => {
+    const startTime = performance.now();
+    if (!text.trim() || !text.includes('BEGIN:VCALENDAR')) {
+      return getEventsFromICS(text);
+    }
+
+    const correctedText = preprocessICSText(text);
+    let jCalData: ReturnType<typeof ical.parse>;
+    try {
+      jCalData = ical.parse(correctedText);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to parse ICS content: ${message}`, { cause: error });
+    }
+
+    const component = new ical.Component(jCalData);
+    const vevents = component.getAllSubcomponents('vevent');
+    const validEvents: ical.Event[] = [];
+    let frameStart = performance.now();
+
+    for (let i = 0; i < vevents.length; i++) {
+      const vevent = vevents[i];
+      try {
+        const evt = new ical.Event(vevent);
+        evt.startDate.toJSDate();
+        evt.endDate.toJSDate();
+        validEvents.push(evt);
+      } catch {
+        // Skip invalid event
+      }
+      frameStart = await yieldIfFrameBudgetExceeded(frameStart, 6);
+    }
+
+    const baseEvents: Record<string, OFCEvent> = {};
+    const recurrenceExceptions: [string, OFCEvent][] = [];
+
+    for (let i = 0; i < validEvents.length; i++) {
+      const e = validEvents[i];
+      if (e.recurrenceId === null) {
+        const parsed = icsToOFC(e);
+        if (parsed) {
+          baseEvents[e.uid] = parsed;
+        }
+      } else {
+        const parsed = icsToOFC(e);
+        if (parsed) {
+          recurrenceExceptions.push([e.uid, parsed]);
+        }
+      }
+      frameStart = await yieldIfFrameBudgetExceeded(frameStart, 6);
+    }
+
+    for (const [uid, event] of recurrenceExceptions) {
+      const baseEvent = baseEvents[uid];
+      if (baseEvent && baseEvent.type === 'rrule' && event.type === 'single') {
+        const originalDate = recurrenceIdToDate(event.recurrenceId) || event.date;
+        if (originalDate) {
+          baseEvent.skipDates.push(originalDate);
+        }
+      }
+    }
+
+    const allEvents = Object.values(baseEvents).concat(recurrenceExceptions.map(e => e[1]));
+    const vtodos = component.getAllSubcomponents('vtodo');
+    const validTodos: OFCEvent[] = [];
+
+    for (let i = 0; i < vtodos.length; i++) {
+      try {
+        const parsed = todoToOFC(vtodos[i]);
+        if (parsed) {
+          validTodos.push(parsed);
+        }
+      } catch {
+        // Skip invalid todo
+      }
+      frameStart = await yieldIfFrameBudgetExceeded(frameStart, 6);
+    }
+
+    const allEventsAndTodos = allEvents.concat(validTodos);
+    const result = allEventsAndTodos.map(validateEvent).flatMap(e => (e ? [e] : []));
+
+    const durationMs = performance.now() - startTime;
+    if (durationMs >= 50) {
+      LoadDebugProfiler.recordFreeze(
+        `ICS Parsing (${result.length} events)`,
+        durationMs,
+        `Payload size: ${(text.length / 1024).toFixed(1)} KB`
+      );
+    }
+
+    await yieldToMainThread();
+    return result;
+  });
 }

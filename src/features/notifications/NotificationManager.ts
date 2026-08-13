@@ -2,7 +2,6 @@ import { showNotice } from '../../utils/showNotice';
 import { PluginState } from '../../core/PluginState';
 import { DateTime } from 'luxon';
 
-import { OFCEvent } from '../../types';
 import { FullCalendarSettings } from '../../types/settings';
 import FullCalendarPlugin from '../../main';
 import { TimeState, EnrichedOFCEvent } from '../../core/TimeEngine';
@@ -10,35 +9,35 @@ import { t } from '../i18n/i18n';
 import { launchReminderModal } from './ui/reminder_modal';
 
 export class NotificationManager {
-  private plugin: FullCalendarPlugin;
-  private timeTickCallback: ((state: TimeState) => void) | null = null;
+  #plugin: FullCalendarPlugin;
+  #timeTickCallback: ((state: TimeState) => void) | null = null;
   // Store notified events to prevent duplicate notifications in the same session.
   // Format: `${sessionId}::${type}::${triggerTimeISO}`
-  private notifiedEvents = new Set<string>();
+  #notifiedEvents = new Set<string>();
 
   constructor(plugin: FullCalendarPlugin) {
-    this.plugin = plugin;
+    this.#plugin = plugin;
   }
 
   public unload(): void {
-    if (this.timeTickCallback) {
-      PluginState.getCache().off('time-tick', this.timeTickCallback);
-      this.timeTickCallback = null;
+    if (this.#timeTickCallback) {
+      PluginState.getCache().off('time-tick', this.#timeTickCallback);
+      this.#timeTickCallback = null;
     }
   }
 
   public update(settings: FullCalendarSettings): void {
     const shouldBeRunning = settings.enableReminders;
-    const isRunning = this.timeTickCallback !== null;
+    const isRunning = this.#timeTickCallback !== null;
 
     if (shouldBeRunning && !isRunning) {
-      this.notifiedEvents.clear();
-      this.timeTickCallback = (state: TimeState) => this.handleTimeTick(state);
-      PluginState.getCache().on('time-tick', this.timeTickCallback);
+      this.#notifiedEvents.clear();
+      this.#timeTickCallback = (state: TimeState) => this.handleTimeTick(state);
+      PluginState.getCache().on('time-tick', this.#timeTickCallback);
     } else if (!shouldBeRunning && isRunning) {
-      if (this.timeTickCallback) {
-        PluginState.getCache().off('time-tick', this.timeTickCallback);
-        this.timeTickCallback = null;
+      if (this.#timeTickCallback) {
+        PluginState.getCache().off('time-tick', this.#timeTickCallback);
+        this.#timeTickCallback = null;
       }
     }
   }
@@ -109,7 +108,7 @@ export class NotificationManager {
       const finalId = isRecurring ? `${occurrence.id}-${start.toMillis()}` : occurrence.id;
 
       // Map Vault Deep Link
-      const vaultName = encodeURIComponent(this.plugin.app.vault.getName());
+      const vaultName = encodeURIComponent(this.#plugin.app.vault.getName());
       const filePath = occurrence.location ? encodeURIComponent(occurrence.location.file.path) : '';
       const action_url = filePath
         ? `obsidian://open?vault=${vaultName}&file=${filePath}`
@@ -149,11 +148,11 @@ export class NotificationManager {
     type: 'default' | 'custom',
     triggerTime: DateTime
   ) {
-    const { id: sessionId, event } = occurrence;
+    const { id: sessionId } = occurrence;
     // Deduplication key: Unique per session, type, and specific trigger instance
     const key = `${sessionId}::${type}::${triggerTime.toISO()}`;
 
-    if (this.notifiedEvents.has(key)) return;
+    if (this.#notifiedEvents.has(key)) return;
 
     // Check if FCR reminder companion is enabled
     const companionSettings = PluginState.getSettings().fcrReminderCompanion;
@@ -162,19 +161,20 @@ export class NotificationManager {
       return;
     }
 
-    this.triggerNotification(event, sessionId, type);
-    this.notifiedEvents.add(key);
+    this.triggerNotification(occurrence, sessionId, type);
+    this.#notifiedEvents.add(key);
   }
 
-  private triggerNotification(event: OFCEvent, eventId: string, type: 'default' | 'custom') {
+  private triggerNotification(
+    occurrence: EnrichedOFCEvent,
+    eventId: string,
+    type: 'default' | 'custom'
+  ) {
+    const { event, start } = occurrence;
     const title = t('notifications.eventStarting.title'); // "Event Starting"
 
     // Customize body based on type
-    // Customize body based on type
-    const timeStr =
-      !event.allDay && event.startTime
-        ? DateTime.fromFormat(event.startTime, 'HH:mm').toFormat('h:mm a')
-        : '';
+    const timeStr = !event.allDay && start ? start.toLocal().toFormat('h:mm a') : '';
 
     let body = `${event.title}`;
     if (timeStr) body += ` at ${timeStr}`;
@@ -192,7 +192,7 @@ export class NotificationManager {
 
       notification.onclick = () => {
         // Launch the interactive modal instead of just opening the file
-        launchReminderModal(this.plugin, event, eventId, type);
+        launchReminderModal(this.#plugin, occurrence, eventId, type);
       };
     } catch (e) {
       console.error(t('notifications.failed'), e);

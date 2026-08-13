@@ -3,14 +3,22 @@
 !!! abstract "Implementation focus"
     This page summarizes important provider implementations and highlights non-standard behavior or patches that contributors must preserve.
 
-## Provider families
+## Provider families & load priorities
 
-| Family      | Providers                                  | Notes                                                                   |
-| ----------- | ------------------------------------------ | ----------------------------------------------------------------------- |
-| Local       | Full Note, Daily Note, Journals            | Vault-backed, file-centric parsing and persistence.                     |
-| Remote      | Google, Outlook, CalDAV, ICS, Google Tasks | Network-backed with auth/protocol handling and staged loading behavior. |
-| Integration | Tasks, TaskNotes, Bases                    | Plugin/API integration with custom semantics beyond simple event files. |
-| Virtual     | Holidays                                   | Computed on-the-fly from bundled data; no vault file or network backing. |
+| Family      | Providers             | Load Priority | Notes |
+| ----------- | --------------------- | :---: | ----------------------------------------------------------------------- |
+| Local       | Full Note             | `10`  | Stage 0 local sync. Vault-backed, file-centric parsing and persistence. |
+| Local       | Daily Note            | `20`  | Stage 0 local sync. List item parsing under heading, Dataview format support. |
+| Local       | Journals              | `20`  | Stage 0 local sync. Reuses Daily Note date-note CRUD base for Day journals. |
+| Local       | Obsidian Bases        | `10`  | Stage 0 local sync. Evaluates `.base` filters and frontmatter date fields. Read-only. |
+| Integration | Tasks                 | `30`  | Stage 0 local sync. Plugin cache integration, surgical markdown line updates. |
+| Integration | TaskNotes             | `40`  | Stage 0 local sync. Service/UI integration with provider-owned NLP endpoint. |
+| Virtual     | Holidays              | `5`   | Stage 0 virtual. Computed on-the-fly from bundled data; no vault/network backing. |
+| Remote      | CalDAV                | `110` | Stage 1 & 2 remote async. RFC 4791 protocol support with defensive fallback. |
+| Remote      | Google                | `120` | Stage 1 & 2 remote async. OAuth authenticated sync with recurrence handling. |
+| Remote      | Google Tasks          | `125` | Stage 1 & 2 remote async. Tasks API integration with union OAuth scope preservation. |
+| Remote      | ICS                   | `140` | Stage 1 & 2 remote async. Read-only hybrid provider (HTTP URL & local file). |
+| Remote      | Outlook               | `150` | Stage 1 & 2 remote async. OAuth Code + PKCE Graph API sync. |
 
 ## Key implementation notes
 
@@ -19,6 +27,8 @@
 Creates one-note-per-event records, supports full CRUD, and uses robust filename collision handling to avoid destructive overwrites.
 
 **Location & Description Mapping**: Parses and writes `location` (geographic/logical address) and `description` (multiline text) dynamically inside the note's YAML frontmatter block.
+
+**Frontmatter Serialization & Colon Safety**: All string properties in frontmatter are escaped and double-quoted by default when serialized (`escapeYamlString` in `frontmatter.ts` and `noteUtils.ts`). This prevents unquoted colons (`title: Super: Event`) from breaking Obsidian's YAML metadata parser. When reading note files, `getEventsInFile` utilizes `parseFrontmatterWithFallback` if Obsidian's `metadataCache` fails or returns unparsed metadata due to unquoted colons in historical or manually-edited notes.
 
 **Recurrence rules**: Supports weekly, monthly (including specific weekday `repeatOn`), yearly, and daily (`fcrDaily` with optional `repeatInterval`) recurring events. Files for daily recurring events are named with `(Every day)` or `(Every X days)` to provide clean visual identification.
 
@@ -206,6 +216,32 @@ country | state | region | holidayTypes | display
 
 User docs: [Holidays calendar](../../user/calendars/holidays.md)
 
+### Obsidian Bases Provider
+
+Read-only provider (`isRemote = false`, `loadPriority = 10`) that reads Obsidian `.base` schema definitions and extracts events from vault markdown files matching the specified Base query filters.
+
+!!! info "Filter Evaluation Engine"
+    Parses `.base` YAML configuration and evaluates nested `or`, `and`, and `not` logical filter trees against files:
+    - `file.hasTag("tag")` — matches metadata cache tags (supporting `#tag` and `tag` syntax).
+    - `file.inFolder("folder")` — checks prefix path matching against `file.path`.
+    - `file.ext == "md"` — verifies markdown file extension.
+
+**Frontmatter Field Extraction & Categorization**:
+- Heuristically extracts event dates from frontmatter keys: `date`, `start`, `startTime`, or `due`.
+- Extracts categories (`category`, `Category`) and sub-categories (`subCategory`, `SubCategory`, `sub category`).
+- Synthesizes formatted event titles as `Category - SubCategory - Title` or `Category - Title` prior to passing through [`validateEvent()`](file:///d:/Codes/plugin-full-calendar/src/types.ts).
+- Sets `event.uid` to `file.path` to enable O(1) persistent navigation back to the source note on click.
+
+**Capability Contract**:
+- All write operations (`createEvent`, `updateEvent`, `deleteEvent`, `createInstanceOverride`) unconditionally reject. `getCapabilities()` returns `{ canCreate: false, canEdit: false, canDelete: false }`.
+
+**Source files:**
+
+- [`src/providers/bases/BasesProvider.tsx`](file:///d:/Codes/plugin-full-calendar/src/providers/bases/BasesProvider.tsx) — provider class, filter evaluator, and `OFCEvent` conversion
+- [`src/providers/bases/BasesConfigComponent.tsx`](file:///d:/Codes/plugin-full-calendar/src/providers/bases/BasesConfigComponent.tsx) — settings configuration component
+
+User docs: [Obsidian Bases calendar](../../user/calendars/bases.md)
+
 ---
 
 ## Cross-provider orchestration constraints
@@ -258,6 +294,7 @@ This no-provider-branching rule aligns with [Data Flow](../system/data-flow.md#f
 - `src/providers/ProviderRegistry.ts`
 - `src/providers/fullnote/FullNoteProvider.ts`
 - `src/providers/dailynote/DailyNoteProvider.ts`
+- `src/providers/bases/BasesProvider.tsx`
 - `src/providers/ics/ICSProvider.ts`
 - `src/providers/caldav/CalDAVProvider.ts`
 - `src/providers/google/GoogleProvider.ts`

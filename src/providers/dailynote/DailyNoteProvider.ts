@@ -1,4 +1,4 @@
-import { CachedMetadata, moment as obsidianMoment, TFile } from 'obsidian';
+import { CachedMetadata, moment as obsidianMoment, TFile, Vault } from 'obsidian';
 import * as React from 'react';
 
 import {
@@ -13,6 +13,9 @@ import FullCalendarPlugin from '../../main';
 import { ObsidianInterface } from '../../ObsidianAdapter';
 import { OFCEvent, EventLocation } from '../../types';
 import { constructTitle } from '../../features/category/categoryParser';
+import { DailyNoteParseCache } from './DailyNoteParseCache';
+import { yieldIfFrameBudgetExceeded } from '../../utils/async';
+import { LoadDebugProfiler } from '../../utils/LoadDebugProfiler';
 import { t } from '../../features/i18n/i18n';
 
 import {
@@ -150,12 +153,13 @@ export class DailyNoteProvider
   private app: ObsidianInterface;
   private plugin: FullCalendarPlugin;
   private source: DailyNoteProviderConfig;
+  private parseCache: DailyNoteParseCache;
   private noteSource: DailyNoteSourceAdapter;
 
   readonly type: string = 'dailynote';
   readonly displayName: string = 'Daily Note';
   readonly isRemote = false;
-  readonly loadPriority = 120;
+  readonly loadPriority = 20;
 
   constructor(
     source: DailyNoteProviderConfig,
@@ -168,6 +172,8 @@ export class DailyNoteProvider
     this.app = app;
     this.plugin = plugin;
     this.source = { ...source, format: getDailyNoteEventFormat(source) };
+    const vault = plugin?.app?.vault || (app as unknown as { app?: { vault?: Vault } })?.app?.vault;
+    this.parseCache = new DailyNoteParseCache(vault);
     this.noteSource =
       source.type === 'journals' || getDailyNoteSourceProvider(source) === 'journals'
         ? new JournalsDailyNoteSourceAdapter(plugin.app, source)
@@ -302,40 +308,85 @@ export class DailyNoteProvider
   }
 
   public async getEventsInFile(file: TFile): Promise<EditableEventResponse[]> {
-    const date = this.noteSource.getDateForFile(file) ?? undefined;
-    const cache = await waitForMetadataWithTimeout(this.app, file);
+    const cached = this.parseCache.get(file);
+    if (cached) {
+      LoadDebugProfiler.recordDailyNotesStats({ cacheHits: 1 });
+      return cached;
+    }
+
+    const cache = this.app.getMetadata(file) || (await waitForMetadataWithTimeout(this.app, file));
     if (!cache) {
       return [];
     }
+
+    // PRE-FILTER: If the user configured a specific heading for Daily Notes (e.g. "Calendar"),
+    // check if this file's metadata contains that heading. If not, skip reading the file!
+    if (this.source.heading && this.source.heading.trim()) {
+      const headingText = this.source.heading.trim();
+      const hasHeading = cache.headings?.some(h => h.heading === headingText);
+      if (!hasHeading) {
+        LoadDebugProfiler.recordDailyNotesStats({ preFiltered: 1 });
+        this.parseCache.set(file, []);
+        return [];
+      }
+    }
+
     const listItems = getListsUnderHeading(this.source.heading, cache);
+    if (listItems.length === 0) {
+      LoadDebugProfiler.recordDailyNotesStats({ preFiltered: 1 });
+      this.parseCache.set(file, []);
+      return [];
+    }
+
+    LoadDebugProfiler.recordDailyNotesStats({ readFromDisk: 1 });
+    const date = this.noteSource.getDateForFile(file) ?? undefined;
     const inlineEvents = await this.app.process(file, text =>
       getAllInlineEventsFromFile(text, listItems, { date })
     );
 
     // The raw events are returned as-is. The EventEnhancer handles timezone conversion.
-    return inlineEvents.map(({ event, lineNumber }) => {
+    const result: EditableEventResponse[] = inlineEvents.map(({ event, lineNumber }) => {
       return [event, { file, lineNumber }];
     });
+
+    this.parseCache.set(file, result);
+    return result;
   }
 
   async getEvents(range?: { start: Date; end: Date }): Promise<EditableEventResponse[]> {
-    let files = this.noteSource.getAllFiles();
+    return LoadDebugProfiler.withContext('Daily Note Sync', async () => {
+      let files = this.noteSource.getAllFiles();
 
-    // OPTIMIZATION: If a range is provided, only process daily notes within that range.
-    if (range) {
-      const startMoment = moment(range.start);
-      const endMoment = moment(range.end);
-      files = files.filter(file => {
-        const fileDate = this.noteSource.getDateForFile(file);
-        return fileDate
-          ? fileDate >= startMoment.format('YYYY-MM-DD') &&
-              fileDate <= endMoment.format('YYYY-MM-DD')
-          : false;
-      });
-    }
+      // OPTIMIZATION: If a range is provided, only process daily notes within that range.
+      if (range) {
+        const startMoment = moment(range.start);
+        const endMoment = moment(range.end);
+        files = files.filter(file => {
+          const fileDate = this.noteSource.getDateForFile(file);
+          return fileDate
+            ? fileDate >= startMoment.format('YYYY-MM-DD') &&
+                fileDate <= endMoment.format('YYYY-MM-DD')
+            : false;
+        });
+      }
 
-    const allEvents = await Promise.all(files.map(f => this.getEventsInFile(f)));
-    return allEvents.flat();
+      LoadDebugProfiler.recordDailyNotesStats({ totalScanned: files.length });
+
+      const allEvents: EditableEventResponse[][] = [];
+      let frameStart = performance.now();
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const res = await LoadDebugProfiler.withContext(
+          'Parse Daily Note File',
+          () => this.getEventsInFile(file),
+          file.path
+        );
+        allEvents.push(res);
+        frameStart = await yieldIfFrameBudgetExceeded(frameStart, 5);
+      }
+      return allEvents.flat();
+    });
   }
 
   async createEvent(event: OFCEvent): Promise<[OFCEvent, EventLocation]> {

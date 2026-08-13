@@ -141,7 +141,14 @@ export class ObsidianDailyNoteSourceAdapter implements DailyNoteSourceAdapter {
 
   isFileRelevant(file: TFile): boolean {
     const { folder } = getDailyNoteSettings();
-    return folder ? file.path.startsWith(`${folder}/`) : true;
+    if (folder && !file.path.startsWith(`${folder}/`)) {
+      return false;
+    }
+    try {
+      return getDateFromFile(file, 'day') !== null;
+    } catch {
+      return false;
+    }
   }
 }
 

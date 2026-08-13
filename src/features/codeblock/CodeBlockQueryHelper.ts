@@ -7,6 +7,7 @@ import { ViewEnhancer } from '../../core/ViewEnhancer';
 import { EventFilterCriteria, EventSortCriteria } from '../../core/EventFilterSortEngine';
 import type { ViewConfig } from './CodeBlockProcessor';
 import type { InternalAPI } from '../../api/FullCalendarAPI';
+import type { FullCalendarSettings } from '../../types/settings';
 import { toEventInput } from '../../core/interop';
 import type { CachedEvent } from '../../core/EventCache';
 
@@ -70,7 +71,7 @@ export function getEventSources(
 
   // Parse Date Range Offsets & initialDate
   let initialDate: string | undefined = undefined;
-  let baseDate = DateTime.now().startOf('day');
+  let baseDate: DateTime = DateTime.now().startOf('day');
   if (config.defaultDate === 'today') {
     initialDate = DateTime.now().toISODate() || '';
     baseDate = DateTime.now().startOf('day');
@@ -134,7 +135,10 @@ export function getEventSources(
     queried = queried.filter(q => q.title.toLowerCase().includes(titleFilter.toLowerCase()));
   }
 
-  const settings = PluginState.getSettings();
+  const settings: FullCalendarSettings = {
+    ...PluginState.getSettings(),
+    ...enhancer.getCalendarConfig()
+  };
   // Map back to EventInput elements per source
   filteredSources = filteredSources.map(s => {
     if (typeof s === 'object' && s !== null && 'events' in s && Array.isArray(s.events)) {
