@@ -33,36 +33,35 @@ import { openOrCreateLinkedNote } from '../../utils/eventActions';
 import { openLinkedFileInExistingLeafOrNew } from '../../utils/leafUtils';
 import { t } from '../../features/i18n/i18n';
 import { LinkedNoteIndex } from '../../providers/utils/LinkedNoteIndex';
+import { resolveDefaultCalendarIndex } from './resolveDefaultCalendar';
+import { listWritableCalendars } from '../../utils/writableCalendars';
 
 export function launchCreateModal(
   plugin: FullCalendarPlugin,
   partialEvent: Partial<OFCEvent>,
   defaultCalendarId?: string | null
 ) {
-  const calendars = PluginState.getProviderRegistry()
-    .getAllSources()
-    .filter(s => s.type !== 'FOR_TEST_ONLY')
-    .map(info => {
-      const instance = PluginState.getProviderRegistry().getInstance(info.id);
-      if (!instance) return null;
-      const capabilities = instance.getCapabilities();
-      if (!capabilities.canCreate) return null; // Filter for writable calendars
-
-      return {
-        id: info.id,
-        type: info.type,
-        name: info.name || ''
-      };
-    })
-    .filter((c): c is NonNullable<typeof c> => !!c);
+  const calendars = listWritableCalendars();
 
   if (calendars.length === 0) {
     showNotice(t('modals.editEvent.errors.createNoCalendars'));
     return;
   }
 
-  const calIdx = defaultCalendarId ? calendars.findIndex(({ id }) => id === defaultCalendarId) : 0;
-  const finalCalIdx = calIdx === -1 ? 0 : calIdx;
+  // An active workspace's default takes precedence over the global one; with no
+  // workspace configured, the global value is used directly. Read straight from
+  // settings rather than through WorkspaceManager, which pulls in the view layer.
+  const settings = PluginState.getSettings();
+  const activeWorkspace = settings.activeWorkspace
+    ? settings.workspaces.find(workspace => workspace.id === settings.activeWorkspace)
+    : undefined;
+  const finalCalIdx = resolveDefaultCalendarIndex({
+    candidates: calendars,
+    explicitId: defaultCalendarId,
+    workspaceDefaultId: activeWorkspace?.defaultCalendarId,
+    globalDefaultId: settings.defaultCalendarId,
+    visibleCalendarIds: activeWorkspace?.visibleCalendars
+  });
 
   // MODIFICATION: Get available categories
   const availableCategories = PluginState.getCache().getAllCategories();
