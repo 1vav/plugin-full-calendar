@@ -14,6 +14,8 @@
 
 import { PluginState } from '../core/PluginState';
 import { CalendarInfo } from '../types/calendar_settings';
+import { getActiveWorkspace } from '../types/settings';
+import { resolveDefaultCalendarIndex } from '../ui/modals/resolveDefaultCalendar';
 
 export interface WritableCalendarOption {
   id: string;
@@ -43,4 +45,43 @@ export function listWritableCalendars(): WritableCalendarOption[] {
       };
     })
     .filter(option => option !== null);
+}
+
+export interface DefaultCalendarSelection {
+  /** Writable calendars, in settings order. */
+  candidates: WritableCalendarOption[];
+  /** Index into `candidates`, or -1 when there are none. */
+  index: number;
+  /** The selected calendar's ID, or null when no calendar can accept events. */
+  id: string | null;
+}
+
+/**
+ * Applies the default-calendar resolution ladder against current settings.
+ *
+ * Shared by every entry point that creates an event without the user having
+ * picked a calendar — the create modal and the NLP dispatcher — so all of them
+ * honor the global default, the active workspace's override, and that
+ * workspace's visibility filter identically.
+ *
+ * @param explicitId A calendar named by the caller, which outranks configuration.
+ */
+export function selectDefaultCalendar(explicitId?: string | null): DefaultCalendarSelection {
+  const candidates = listWritableCalendars();
+  if (candidates.length === 0) {
+    return { candidates, index: -1, id: null };
+  }
+
+  const settings = PluginState.getSettings();
+  const activeWorkspace = getActiveWorkspace(settings);
+
+  const index = resolveDefaultCalendarIndex({
+    candidates,
+    explicitId,
+    workspaceDefaultId: activeWorkspace?.defaultCalendarId,
+    globalDefaultId: settings.defaultCalendarId,
+    visibleCalendarIds: activeWorkspace?.visibleCalendars
+  });
+
+  return { candidates, index, id: candidates[index].id };
 }

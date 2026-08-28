@@ -138,6 +138,48 @@ describe('resolveDefaultCalendarIndex', () => {
     });
   });
 
+  describe('fallback never lands on a workspace-hidden calendar', () => {
+    it('skips hidden calendars when falling back with no default configured', () => {
+      expect(
+        resolveDefaultCalendarIndex({
+          candidates,
+          visibleCalendarIds: ['caldav_1']
+        })
+      ).toBe(2);
+    });
+
+    it('skips hidden calendars when every configured default is unusable', () => {
+      expect(
+        resolveDefaultCalendarIndex({
+          candidates,
+          workspaceDefaultId: 'deleted_9',
+          globalDefaultId: 'deleted_8',
+          visibleCalendarIds: ['google_1', 'caldav_1']
+        })
+      ).toBe(1);
+    });
+
+    it('skips a hidden calendar that the global default points at', () => {
+      expect(
+        resolveDefaultCalendarIndex({
+          candidates,
+          globalDefaultId: 'local_1',
+          visibleCalendarIds: ['caldav_1']
+        })
+      ).toBe(2);
+    });
+
+    it('falls back to the first writable calendar when the workspace hides all of them', () => {
+      // Degenerate config: selecting something actionable beats selecting nothing.
+      expect(
+        resolveDefaultCalendarIndex({
+          candidates,
+          visibleCalendarIds: ['some_other_calendar']
+        })
+      ).toBe(0);
+    });
+  });
+
   describe('explicit caller override', () => {
     it('prefers an explicit id over both configured defaults', () => {
       expect(

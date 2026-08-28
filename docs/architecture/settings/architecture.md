@@ -23,7 +23,10 @@ This page describes how settings are modeled and applied.
     | 1 | Explicit `defaultCalendarId` argument to `launchCreateModal` | Not a writable calendar |
     | 2 | Active workspace `defaultCalendarId` | Not writable, or hidden by that workspace's `visibleCalendars` |
     | 3 | Global `defaultCalendarId` | Not writable, or hidden by the active workspace |
-    | 4 | First writable calendar (index `0`) | — |
+    | 4 | First writable calendar the active workspace displays | Workspace hides every writable calendar |
+    | 5 | First writable calendar (index `0`) | — |
+
+    Applied through `selectDefaultCalendar()` in [writableCalendars.ts](../../../src/utils/writableCalendars.ts), which is shared by the create modal and the NLP dispatcher's `resolveCalendarId` so both entry points resolve identically.
 
     Deliberately **not** merged in `WorkspaceManager.getCalendarConfig()`: that method composes the configuration handed to FullCalendar for rendering, and this field never reaches the view layer. Importing `WorkspaceManager` from the modal would also pull the view layer into the create path. Legacy numeric `defaultCalendar` values are dropped on load by [utilsSettings.ts](../../../src/ui/settings/utilsSettings.ts); the field was never read, so nothing is lost.
 

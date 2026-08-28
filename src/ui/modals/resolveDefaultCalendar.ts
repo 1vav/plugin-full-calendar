@@ -76,7 +76,13 @@ function isVisible(id: string, visibleCalendarIds?: readonly string[] | null): b
  *   1. An explicit calendar named by the caller.
  *   2. The active workspace's default, when writable and visible.
  *   3. The global default, when writable and visible.
- *   4. The first writable calendar.
+ *   4. The first writable calendar the active workspace can display.
+ *   5. The first writable calendar, when the workspace hides all of them.
+ *
+ * Rule 4 keeps the documented promise that a calendar hidden by a workspace is
+ * never chosen for it. Rule 5 exists only for the degenerate case where a
+ * workspace hides every calendar that could accept the event; selecting
+ * something the user can act on beats selecting nothing.
  *
  * @returns An index into `candidates`; always 0 when nothing else resolves.
  */
@@ -94,6 +100,11 @@ export function resolveDefaultCalendarIndex(resolution: DefaultCalendarResolutio
       return index;
     }
   }
+
+  const firstVisibleIndex = candidates.findIndex(candidate =>
+    isVisible(candidate.id, visibleCalendarIds)
+  );
+  if (firstVisibleIndex !== -1) return firstVisibleIndex;
 
   return FIRST_WRITABLE_CALENDAR;
 }
